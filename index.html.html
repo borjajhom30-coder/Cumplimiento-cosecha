@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cumplimiento de cosecha</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#f4f6f5;
+  --panel:#ffffff;
+  --ink:#16232b;
+  --ink-soft:#5c6b73;
+  --ink-mute:#8a969c;
+  --line:#e1e6e5;
+  --navy:#16323f;
+  --navy-deep:#0d2029;
+  --gold:#d99a1b;
+  --gold-deep:#9c6d0c;
+  --verde:#2f8f4e;
+  --verde-bg:#e6f4ea;
+  --verde-deep:#1f6236;
+  --pintona:#d99a1b;
+  --pintona-bg:#fbf0d9;
+  --pintona-deep:#9c6d0c;
+  --alto:#c0392b;
+  --alto-bg:#fbe6e3;
+  --alto-deep:#8a281c;
+  --shadow:0 1px 2px rgba(22,35,43,0.06), 0 4px 14px rgba(22,35,43,0.05);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;}
+h1,h2,h3,.display{font-family:'Manrope',system-ui,sans-serif;}
+.app{max-width:1180px;margin:0 auto;padding:28px 24px 60px;}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{width:40px;height:40px;border-radius:10px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;}
+.brand h1{font-size:19px;font-weight:800;margin:0;color:var(--navy-deep);letter-spacing:-0.01em;}
+.brand p{margin:2px 0 0;font-size:12.5px;color:var(--ink-mute);}
+
+.tabs{display:flex;gap:6px;background:#e9ece9;border-radius:10px;padding:4px;}
+.tab-btn{border:none;background:transparent;padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;font-family:'Inter';}
+.tab-btn.active{background:var(--navy);color:#fff;}
+
+.controls{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:20px;box-shadow:var(--shadow);}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11.5px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.04em;}
+input[type=date],input[type=text],input[type=number],select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:'Inter';color:var(--ink);background:#fff;min-width:0;}
+input[type=number]{width:88px;text-align:right;}
+select{min-width:170px;}
+.chip-row{display:flex;gap:8px;}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+.chip.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.spacer{flex:1;}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;font-family:'Inter';}
+.btn:hover{background:#f6f7f6;}
+.btn-primary{background:var(--navy);border-color:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--navy-deep);}
+.btn-ghost{border-color:transparent;color:var(--ink-soft);}
+.status-msg{font-size:12.5px;color:var(--verde-deep);font-weight:600;min-height:16px;}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:20px;box-shadow:var(--shadow);}
+.panel h2{font-size:15px;margin:0 0 14px;color:var(--navy-deep);font-weight:800;}
+.panel h3{font-size:13px;margin:0 0 10px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+
+table.entry{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.entry th{text-align:right;font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.03em;font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);}
+table.entry th.left{text-align:left;}
+table.entry td{padding:6px 8px;border-bottom:1px solid #eef1f0;text-align:right;}
+table.entry td.left{text-align:left;font-weight:600;}
+table.entry tfoot td{font-weight:800;border-top:2px solid var(--line);border-bottom:none;color:var(--navy-deep);}
+.col-verde{color:var(--verde-deep);}
+.col-pintona{color:var(--pintona-deep);}
+.col-alto{color:var(--alto-deep);}
+.grp-head td{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:800;padding-top:12px;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+.kpi{background:#f7f8f7;border-radius:10px;padding:14px 16px;}
+.kpi .lbl{font-size:11.5px;color:var(--ink-mute);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.kpi .val{font-size:24px;font-weight:800;color:var(--navy-deep);font-family:'Manrope';margin-top:4px;}
+.kpi .sub{font-size:12px;font-weight:600;margin-top:2px;}
+.up{color:var(--verde-deep);}
+.down{color:var(--alto-deep);}
+
+.diff-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:22px;}
+.diff-card{border-radius:10px;padding:14px 16px;border:1px solid var(--line);}
+.diff-card.verde{background:var(--verde-bg);border-color:#cfe6d5;}
+.diff-card.pintona{background:var(--pintona-bg);border-color:#efd9a4;}
+.diff-card.alto{background:var(--alto-bg);border-color:#f0c6bf;}
+.diff-card .name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;}
+.diff-card.verde .name{color:var(--verde-deep);}
+.diff-card.pintona .name{color:var(--pintona-deep);}
+.diff-card.alto .name{color:var(--alto-deep);}
+.diff-card .nums{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+.diff-card .delta{font-size:22px;font-weight:800;font-family:'Manrope';margin-top:6px;}
+.diff-card.verde .delta.pos{color:var(--verde-deep);}
+.diff-card.pintona .delta.pos{color:var(--pintona-deep);}
+.diff-card.alto .delta.pos{color:var(--alto-deep);}
+.delta.neg{color:var(--alto-deep);}
+
+.chart-wrap{position:relative;width:100%;margin-bottom:6px;}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-bottom:10px;flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:6px;}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+.hist-table{width:100%;border-collapse:collapse;font-size:13px;}
+.hist-table th{text-align:left;font-size:11px;color:var(--ink-mute);text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--line);}
+.hist-table td{padding:7px 8px;border-bottom:1px solid #eef1f0;}
+.hist-table tr:hover{background:#f7f8f7;cursor:pointer;}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.tag.normal{background:#e6eef4;color:#1f4e6f;}
+.tag.adelantada{background:#f4ece6;color:#8a4b1f;}
+.tag.exportacion{background:#efe6f4;color:#5b2e7d;}
+
+.upload-row{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:var(--ink-mute);}
+.upload-row input[type=file]{font-size:12.5px;}
+
+.mcal-note{font-size:12px;color:var(--ink-mute);margin:6px 0 14px;}
+
+.detail-wrap{overflow-x:auto;}
+table.detail{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px;}
+table.detail th{text-align:center;font-size:10.5px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.02em;font-weight:700;padding:6px 6px;border-bottom:1px solid var(--line);}
+table.detail th.grp-verde{background:var(--verde-bg);color:var(--verde-deep);}
+table.detail th.grp-pintona{background:var(--pintona-bg);color:var(--pintona-deep);}
+table.detail th.grp-alto{background:var(--alto-bg);color:var(--alto-deep);}
+table.detail th.grp-total{background:#eceff0;color:var(--navy-deep);}
+table.detail td{padding:6px 6px;border-bottom:1px solid #eef1f0;text-align:center;}
+table.detail td.left{text-align:left;font-weight:600;}
+table.detail td.kgcell{color:var(--ink-mute);font-weight:400;font-size:11.5px;}
+table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bottom:none;color:var(--navy-deep);}
+.desf-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-weight:800;font-size:14px;font-family:'Manrope';}
+.badge-ok{background:var(--verde-bg);color:var(--verde-deep);}
+.badge-bad{background:var(--alto-bg);color:var(--alto-deep);}
+.detail-legend{font-size:12px;color:var(--ink-mute);margin:8px 0 12px;}
+</style>
+</head>
+<body>
+<script>window.__EMBEDDED_SHEET_ID__ = "1AKx025QMNxTeuD9sSyKZH8seCmwhGDa4QT3cvVTvPm0";</script>
+
+<script>window.__EMBEDDED_SHEET_ID__ = "1AKx025QMNxTeuD9sSyKZH8seCmwhGDa4QT3cvVTvPm0";</script>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🍍</div>
+      <div>
+        <h1>Cumplimiento de cosecha</h1>
+        <p>Captura diaria y resumen ejecutivo — piña</p>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="vpm" onclick="switchTab('vpm')">Base VPM</button>
+      <button class="tab-btn" data-tab="cumpl" onclick="switchTab('cumpl')">Cumplimiento %</button>
+    </div>
+  </div>
+
+  <div class="panel" id="liveSheetPanel">
+    <div class="upload-row" style="margin-top:0;">
+      <input type="text" id="sheetIdInput" placeholder="Pega aquí el enlace o el ID de la Google Sheet" style="min-width:340px;">
+      <button class="btn btn-primary" onclick="connectLiveSheet()">Conectar</button>
+      <button class="btn btn-ghost" onclick="disconnectLiveSheet()">Desconectar</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--ink-mute);margin-top:8px;" id="liveSheetStatus">Conectado. Última actualización: 11:41:08 a. m.</div>
+    <div id="exportSheetRow" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
+      <button class="btn btn-primary" onclick="exportWithEmbeddedSheet()">Descargar copia con esta conexión incluida</button>
+      <div style="font-size:12px;color:var(--ink-mute);margin-top:8px;">Genera un archivo .html que ya trae esta conexión puesta. Súbelo a GitHub Pages (o compártelo directo) y cualquiera que lo abra verá los datos en vivo, sin pegar el enlace.</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="field">
+      <label>Vista</label>
+      <div class="chip-row" id="viewModeChips"><div class="chip active">Día</div><div class="chip">Semana</div><div class="chip">Mes</div></div>
+    </div>
+    <div class="field" id="fechaField">
+      <label>Fecha</label>
+      <input type="date" id="fechaInput" onchange="onContextChange()">
+    </div>
+    <div class="field" id="semanaField" style="display:none;">
+      <label>Semana</label>
+      <input type="week" id="semanaInput" onchange="onContextChange()">
+    </div>
+    <div class="field" id="mesField" style="display:none;">
+      <label>Mes</label>
+      <input type="month" id="mesInput" onchange="onContextChange()">
+    </div>
+    <div class="field">
+      <label>Tipo de fruta</label>
+      <div class="chip-row" id="tipoChips"><div class="chip active">Inducción (Normal)</div><div class="chip">Adelantada</div><div class="chip">Exportación</div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB VPM ============ -->
+  <div id="tab-vpm">
+
+    <div class="panel" id="vpmCapturePanel">
+      <h2>Captura por calibre y color — <span id="vpmTipoLabel">Inducción (Normal)</span></h2>
+      <table class="entry" id="vpmTable"><thead><tr><th class="left">Calibre</th><th class="col-verde">Est. verde</th><th class="col-verde">Real verde</th><th class="col-pintona">Est. pintón</th><th class="col-pintona">Real pintón</th><th class="col-alto">Est. alto</th><th class="col-alto">Real alto</th><th>Total est.</th><th>Total real</th></tr></thead><tbody><tr><td class="left">Primera</td><td><input type="number" min="0" value="0" id="vpm_ev_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_rv_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_ep_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_rp_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_ea_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_ra_0" oninput="recalcVpmRow(0)"></td><td id="vpm_te_0">10.665</td><td id="vpm_tr_0">0</td></tr><tr><td class="left">Segunda</td><td><input type="number" min="0" value="0" id="vpm_ev_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_rv_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_ep_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_rp_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_ea_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_ra_1" oninput="recalcVpmRow(1)"></td><td id="vpm_te_1">9.617</td><td id="vpm_tr_1">0</td></tr><tr><td class="left">Tercera</td><td><input type="number" min="0" value="0" id="vpm_ev_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_rv_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_ep_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_rp_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_ea_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_ra_2" oninput="recalcVpmRow(2)"></td><td id="vpm_te_2">7.500</td><td id="vpm_tr_2">0</td></tr><tr><td class="left">Guapita</td><td><input type="number" min="0" value="0" id="vpm_ev_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_rv_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_ep_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_rp_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_ea_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_ra_3" oninput="recalcVpmRow(3)"></td><td id="vpm_te_3">9.000</td><td id="vpm_tr_3">0</td></tr><tr><td class="left">Baby</td><td><input type="number" min="0" value="0" id="vpm_ev_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_rv_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_ep_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_rp_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_ea_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_ra_4" oninput="recalcVpmRow(4)"></td><td id="vpm_te_4">5.000</td><td id="vpm_tr_4">0</td></tr><tr><td class="left">Industria</td><td><input type="number" min="0" value="0" id="vpm_ev_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_rv_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_ep_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_rp_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_ea_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_ra_5" oninput="recalcVpmRow(5)"></td><td id="vpm_te_5">2.017</td><td id="vpm_tr_5">0</td></tr><tr><td class="left">Jugos</td><td><input type="number" min="0" value="0" id="vpm_ev_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_rv_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_ep_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_rp_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_ea_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_ra_6" oninput="recalcVpmRow(6)"></td><td id="vpm_te_6">3.700</td><td id="vpm_tr_6">0</td></tr></tbody><tfoot><tr><td class="left">Total general</td><td id="vpm_sum_ev">13.680</td><td id="vpm_sum_rv">0</td><td id="vpm_sum_ep">24.396</td><td id="vpm_sum_rp">0</td><td id="vpm_sum_ea">9.423</td><td id="vpm_sum_ra">0</td><td id="vpm_sum_te">47.499</td><td id="vpm_sum_tr">0</td></tr></tfoot></table>
+      <div style="margin-top:16px;display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveVpm()">Guardar y generar resumen</button>
+        <button class="btn" onclick="clearVpmForm()">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="panel" id="vpmSummaryPanel" style="">
+      <h2>Resumen de cumplimiento de cosecha — <span id="vpmSummaryTipoLabel">Inducción (Normal)</span></h2>
+
+      <div class="kpi-row" id="vpmKpiRow"><div class="kpi"><div class="lbl">Total estimado</div><div class="val">47.499 kg</div></div><div class="kpi"><div class="lbl">Total real</div><div class="val">0 kg</div></div><div class="kpi"><div class="lbl">Cumplimiento global</div><div class="val">0.0%</div><div class="sub down">-47.499 kg vs estimado</div></div></div>
+
+      <h3>Diferencia estimado vs real por color</h3>
+      <div class="diff-row" id="vpmDiffRow"><div class="diff-card verde"><div class="name">Verde (0.0 - 1.0)</div><div class="nums">Estimado 13.680 kg · Real 0 kg</div><div class="delta neg">-13.680 kg</div><div class="nums">0.0% cumplimiento</div></div><div class="diff-card pintona"><div class="name">Pintón (1.5 - 2.5)</div><div class="nums">Estimado 24.396 kg · Real 0 kg</div><div class="delta neg">-24.396 kg</div><div class="nums">0.0% cumplimiento</div></div><div class="diff-card alto"><div class="name">Alto (3.0 - 4.0)</div><div class="nums">Estimado 9.423 kg · Real 0 kg</div><div class="delta neg">-9.423 kg</div><div class="nums">0.0% cumplimiento</div></div></div>
+
+      <h3>Detalle por calibre y color</h3>
+      <div class="detail-legend">El % de desface se resalta en rojo cuando está fuera del rango 95%-105%.</div>
+      <div class="detail-wrap">
+        <table class="detail" id="vpmDetailTable"><thead><tr><th rowspan="2" style="text-align:left;">Calibre</th><th colspan="3" class="grp-verde">Verde (0.0-1.0)</th><th colspan="3" class="grp-pintona">Pintón (1.5-2.5)</th><th colspan="3" class="grp-alto">Alto (3.0-4.0)</th><th colspan="3" class="grp-total">Total</th></tr><tr><th class="grp-verde">Est.</th><th class="grp-verde">Real</th><th class="grp-verde">Desf.</th><th class="grp-pintona">Est.</th><th class="grp-pintona">Real</th><th class="grp-pintona">Desf.</th><th class="grp-alto">Est.</th><th class="grp-alto">Real</th><th class="grp-alto">Desf.</th><th class="grp-total">Est.</th><th class="grp-total">Real</th><th class="grp-total">Desf.</th></tr></thead><tbody><tr><td class="left">Primera</td><td class="kgcell">5.325</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">3.137</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.203</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">10.665</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Segunda</td><td class="kgcell">4.605</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.992</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.020</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">9.617</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Tercera</td><td class="kgcell">3.750</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.250</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">1.500</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">7.500</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Guapita</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">9.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">9.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Baby</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">5.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">5.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Industria</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">2.017</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">2.017</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Jugos</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">3.700</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">3.700</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr></tbody><tfoot><tr><td class="left">Total general</td><td class="kgcell">13.680</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">24.396</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">9.423</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">47.499</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr></tfoot></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Historial de capturas VPM</h2>
+      <table class="hist-table" id="vpmHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>Total estimado</th><th>Total real</th><th>Cumplimiento</th></tr></thead><tbody><tr onclick="loadHistoryRow('2026-07-22','normal')"><td>2026-07-22</td><td><span class="tag normal">Inducción (Normal)</span></td><td>38.002 kg</td><td>34.746 kg</td><td>91.4%</td></tr><tr onclick="loadHistoryRow('2026-07-21','normal')"><td>2026-07-21</td><td><span class="tag normal">Inducción (Normal)</span></td><td>66.500 kg</td><td>72.540 kg</td><td>109.1%</td></tr></tbody></table>
+    </div>
+
+  </div>
+
+  <!-- ============ TAB CUMPLIMIENTO ============ -->
+  <div id="tab-cumpl" style="display:none;">
+
+    <div class="panel" id="cumplCapturePanel">
+      <h2>Captura de porcentajes — <span id="cumplTipoLabel">Inducción (Normal)</span></h2>
+
+      <h3>Cumplimiento de calibre</h3>
+      <table class="entry" id="cumplCalibreTable"><thead><tr><th class="left">Calibre</th><th>Proyectado %</th><th>Real %</th></tr></thead><tbody><tr><td class="left">Primera</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_0"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_0"></td></tr><tr><td class="left">Segunda</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_1"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_1"></td></tr><tr><td class="left">Tercera</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_2"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_2"></td></tr><tr><td class="left">Guapita</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_3"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_3"></td></tr><tr><td class="left">Baby</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_4"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_4"></td></tr><tr><td class="left">Industria</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_5"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_5"></td></tr><tr><td class="left">Jugos</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_6"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_6"></td></tr></tbody></table>
+
+      <h3 style="margin-top:20px;">Cumplimiento de color</h3>
+      <table class="entry" id="cumplColorTable"><thead><tr><th class="left">Color</th><th>Proyectado %</th><th>Real %</th><th>M.Cal %</th></tr></thead><tbody><tr><td class="left">Verde (0.0 - 1.0)</td><td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_verde"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_real_verde"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_verde"></td></tr><tr><td class="left">Pintón (1.5 - 2.5)</td><td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_pintona"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_real_pintona"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_pintona"></td></tr><tr><td class="left">Alto (3.0 - 4.0)</td><td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_alto"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_real_alto"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_alto"></td></tr></tbody></table>
+      <p class="mcal-note">M.Cal: meta de color entregada aparte (no se calcula, se digita).</p>
+
+      <div style="margin-top:14px;display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveCumpl()">Guardar y generar presentación</button>
+        <button class="btn" onclick="clearCumplForm()">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="panel" id="cumplSummaryPanel" style="">
+      <h2>Presentación ejecutiva — <span id="cumplSummaryTipoLabel">Inducción (Normal)</span></h2>
+
+      <h3>Cumplimiento por calibre</h3>
+      <div class="legend">
+        <span><span class="dot" style="background:#3266ad"></span>Proyectado</span>
+        <span><span class="dot" style="background:#eb6834"></span>Real</span>
+      </div>
+      <div class="chart-wrap" style="height:260px;">
+        <canvas id="cumplCalibreChart" role="img" aria-label="Comparación de porcentaje proyectado y real por calibre" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0">Gráfico de barras comparando cumplimiento proyectado y real por calibre.</canvas>
+      </div>
+
+      <h3 style="margin-top:22px;">Cumplimiento por color</h3>
+      <div class="legend">
+        <span><span class="dot" style="background:#3266ad"></span>Proyectado</span>
+        <span><span class="dot" style="background:#eb6834"></span>Real</span>
+      </div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="cumplColorChart" role="img" aria-label="Comparación de porcentaje proyectado y real por color" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0">Gráfico de barras comparando cumplimiento proyectado y real por color.</canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Historial de cumplimiento</h2>
+      <table class="hist-table" id="cumplHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>% Calibre cumplido</th><th>% Color cumplido</th></tr></thead><tbody><tr onclick="loadHistoryRowCumpl('2026-07-21','normal')"><td>2026-07-21</td><td><span class="tag normal">Inducción (Normal)</span></td><td>99.8%</td><td>105.1%</td></tr></tbody></table>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script>
+if(window.Chart && window.ChartDataLabels){ Chart.register(ChartDataLabels); }
+
+const CALIBRE_SETS = {
+  normal: ['Primera','Segunda','Tercera','Guapita','Baby','Industria','Jugos'],
+  adelantada: ['PrimeraAd','SegundaAd','TerceraAd','GuapitaAd','BabyAd','IndustriaAd','JugosAd'],
+  exportacion: ['Calibre 5','Calibre 6','Calibre 7','Calibre 8','Calibre 9','Calibre 10']
+};
+const TIPOS = [
+  {key:'normal', label:'Inducción (Normal)'},
+  {key:'adelantada', label:'Adelantada'},
+  {key:'exportacion', label:'Exportación'}
+];
+const COLOR_KEYS = [
+  {key:'verde', label:'Verde (0.0 - 1.0)', deep:'#1f6236'},
+  {key:'pintona', label:'Pintón (1.5 - 2.5)', deep:'#9c6d0c'},
+  {key:'alto', label:'Alto (3.0 - 4.0)', deep:'#8a281c'}
+];
+
+let state = { fecha: todayStr(), tipo: 'normal' };
+let vpmChartCalibre = null, vpmChartColor = null, cumplChartCalibre = null, cumplChartColor = null;
+let importedVpm = (typeof window.__EMBEDDED_VPM_DATA__ !== 'undefined' && window.__EMBEDDED_VPM_DATA__) ? window.__EMBEDDED_VPM_DATA__ : {};
+let importedDates = [];
+
+const CALIBRE_MAP = {
+  '01_Primera':{tipo:'normal',cal:'Primera'}, '01_01_Primera':{tipo:'normal',cal:'Primera'},
+  '02_Segunda':{tipo:'normal',cal:'Segunda'},
+  '03_Tercera':{tipo:'normal',cal:'Tercera'},
+  '04_Guapita':{tipo:'normal',cal:'Guapita'},
+  '05_Baby':{tipo:'normal',cal:'Baby'},
+  '06_Industria':{tipo:'normal',cal:'Industria'},
+  '07_Jugos':{tipo:'normal',cal:'Jugos'},
+  '01_PrimeraAd':{tipo:'adelantada',cal:'PrimeraAd'},
+  '02_SegundaAd':{tipo:'adelantada',cal:'SegundaAd'},
+  '03_TerceraAd':{tipo:'adelantada',cal:'TerceraAd'},
+  '04_GuapitaAd':{tipo:'adelantada',cal:'GuapitaAd'},
+  '05_BabyAd':{tipo:'adelantada',cal:'BabyAd'},
+  '06_IndustriaAd':{tipo:'adelantada',cal:'IndustriaAd'},
+  '07_JugosAd':{tipo:'adelantada',cal:'JugosAd'},
+  'CALIBRE 5':{tipo:'exportacion',cal:'Calibre 5'},
+  'CALIBRE 6':{tipo:'exportacion',cal:'Calibre 6'},
+  'CALIBRE 7':{tipo:'exportacion',cal:'Calibre 7'},
+  'CALIBRE 8':{tipo:'exportacion',cal:'Calibre 8'},
+  'CALIBRE 9':{tipo:'exportacion',cal:'Calibre 9'},
+  'CALIBRE 10':{tipo:'exportacion',cal:'Calibre 10'}
+};
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmt(n){ n = Number(n)||0; return Math.round(n).toLocaleString('es-CO'); }
+function fmtPct(n){ if(!isFinite(n)) n = 0; return (n*100).toFixed(1)+'%'; }
+function setStatus(msg){
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  if(msg) setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 2600);
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.getElementById('tab-vpm').style.display = tab==='vpm' ? '' : 'none';
+  document.getElementById('tab-cumpl').style.display = tab==='cumpl' ? '' : 'none';
+}
+
+function buildTipoChips(){
+  const wrap = document.getElementById('tipoChips');
+  wrap.innerHTML = '';
+  TIPOS.forEach(t=>{
+    const c = document.createElement('div');
+    c.className = 'chip' + (t.key===state.tipo ? ' active' : '');
+    c.textContent = t.label;
+    c.onclick = ()=>{ state.tipo = t.key; onContextChange(); };
+    wrap.appendChild(c);
+  });
+}
+
+const VIEW_MODES = [
+  {key:'dia', label:'Día'},
+  {key:'semana', label:'Semana'},
+  {key:'mes', label:'Mes'}
+];
+
+function buildViewModeChips(){
+  const wrap = document.getElementById('viewModeChips');
+  wrap.innerHTML = '';
+  VIEW_MODES.forEach(v=>{
+    const c = document.createElement('div');
+    c.className = 'chip' + (v.key===state.viewMode ? ' active' : '');
+    c.textContent = v.label;
+    c.onclick = ()=>{ state.viewMode = v.key; onContextChange(); };
+    wrap.appendChild(c);
+  });
+}
+
+function isoWeekString(d){
+  const date = new Date(d.getTime());
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate() + 3 - ((date.getDay()+6)%7));
+  const week1 = new Date(date.getFullYear(),0,4);
+  const weekNo = 1 + Math.round(((date-week1)/86400000 - 3 + ((week1.getDay()+6)%7))/7);
+  return date.getFullYear()+'-W'+String(weekNo).padStart(2,'0');
+}
+
+function datesInWeek(weekStr){
+  const [yearStr, wStr] = weekStr.split('-W');
+  const year = Number(yearStr), week = Number(wStr);
+  const jan4 = new Date(year,0,4);
+  const jan4Day = (jan4.getDay()+6)%7;
+  const week1Monday = new Date(jan4); week1Monday.setDate(jan4.getDate()-jan4Day);
+  const monday = new Date(week1Monday); monday.setDate(week1Monday.getDate() + (week-1)*7);
+  const dates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    dates.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return dates;
+}
+
+function datesInMonth(monthStr){
+  const [yearStr, mStr] = monthStr.split('-');
+  const year = Number(yearStr), month = Number(mStr);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const dates = [];
+  for(let d=1; d<=daysInMonth; d++){
+    dates.push(year+'-'+String(month).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  }
+  return dates;
+}
+
+async function getAggregatedRows(tipo, dateList){
+  const calibres = CALIBRE_SETS[tipo];
+  const sums = calibres.map(c=>({calibre:c, ev:0, rv:0, ep:0, rp:0, ea:0, ra:0}));
+  let daysWithData = 0;
+  for(const d of dateList){
+    const rows = await getEffectiveVpmRows(d, tipo);
+    if(!rows) continue;
+    daysWithData++;
+    rows.forEach((r,i)=>{
+      sums[i].ev+=r.ev; sums[i].rv+=r.rv; sums[i].ep+=r.ep; sums[i].rp+=r.rp; sums[i].ea+=r.ea; sums[i].ra+=r.ra;
+    });
+  }
+  return {rows: sums, daysWithData};
+}
+
+function onContextChange(){
+  if(!state.viewMode) state.viewMode = 'dia';
+
+  state.fecha = document.getElementById('fechaInput').value || todayStr();
+
+  const semanaInput = document.getElementById('semanaInput');
+  const mesInput = document.getElementById('mesInput');
+
+  if(state.viewMode==='semana'){
+    state.semana = semanaInput.value || state.semana || isoWeekString(new Date());
+  } else if(!state.semana){
+    state.semana = isoWeekString(new Date());
+  }
+  semanaInput.value = state.semana;
+
+  if(state.viewMode==='mes'){
+    state.mes = mesInput.value || state.mes || todayStr().slice(0,7);
+  } else if(!state.mes){
+    state.mes = todayStr().slice(0,7);
+  }
+  mesInput.value = state.mes;
+
+  document.getElementById('fechaField').style.display = state.viewMode==='dia' ? '' : 'none';
+  document.getElementById('semanaField').style.display = state.viewMode==='semana' ? '' : 'none';
+  document.getElementById('mesField').style.display = state.viewMode==='mes' ? '' : 'none';
+
+  buildTipoChips();
+  buildViewModeChips();
+  const captureVisible = state.viewMode==='dia' ? '' : 'none';
+  document.getElementById('vpmCapturePanel').style.display = captureVisible;
+  document.getElementById('cumplCapturePanel').style.display = captureVisible;
+
+  const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
+  document.getElementById('vpmTipoLabel').textContent = tipoLabel;
+  document.getElementById('cumplTipoLabel').textContent = tipoLabel;
+
+  let periodLabel = tipoLabel;
+  if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
+  else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
+  document.getElementById('vpmSummaryTipoLabel').textContent = periodLabel;
+  document.getElementById('cumplSummaryTipoLabel').textContent = periodLabel;
+
+  renderVpmTable();
+  renderCumplTables();
+
+  if(state.viewMode==='dia'){
+    loadCurrentVpm();
+    loadCurrentCumpl();
+  } else {
+    loadPeriodView();
+  }
+}
+
+async function loadPeriodView(){
+  const dateList = state.viewMode==='semana' ? datesInWeek(state.semana) : datesInMonth(state.mes);
+  const {rows, daysWithData} = await getAggregatedRows(state.tipo, dateList);
+  if(daysWithData===0){
+    document.getElementById('vpmSummaryPanel').style.display = 'none';
+    document.getElementById('cumplSummaryPanel').style.display = 'none';
+    refreshVpmHistory();
+    refreshCumplHistory();
+    return;
+  }
+  renderVpmSummary(rows);
+  renderCumplSummary(computeCumplFromRows(rows));
+  refreshVpmHistory();
+  refreshCumplHistory();
+}
+
+/* ---------------- VPM TAB ---------------- */
+
+function renderVpmTable(){
+  const calibres = CALIBRE_SETS[state.tipo];
+  const tbl = document.getElementById('vpmTable');
+  let html = '<thead><tr><th class="left">Calibre</th>' +
+    '<th class="col-verde">Est. verde</th><th class="col-verde">Real verde</th>' +
+    '<th class="col-pintona">Est. pintón</th><th class="col-pintona">Real pintón</th>' +
+    '<th class="col-alto">Est. alto</th><th class="col-alto">Real alto</th>' +
+    '<th>Total est.</th><th>Total real</th></tr></thead><tbody>';
+  calibres.forEach((c,i)=>{
+    html += '<tr>' +
+      '<td class="left">'+c+'</td>' +
+      '<td><input type="number" min="0" value="0" id="vpm_ev_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td><input type="number" min="0" value="0" id="vpm_rv_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td><input type="number" min="0" value="0" id="vpm_ep_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td><input type="number" min="0" value="0" id="vpm_rp_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td><input type="number" min="0" value="0" id="vpm_ea_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td><input type="number" min="0" value="0" id="vpm_ra_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td id="vpm_te_'+i+'">0</td><td id="vpm_tr_'+i+'">0</td>' +
+      '</tr>';
+  });
+  html += '</tbody><tfoot><tr><td class="left">Total general</td>' +
+    '<td id="vpm_sum_ev">0</td><td id="vpm_sum_rv">0</td>' +
+    '<td id="vpm_sum_ep">0</td><td id="vpm_sum_rp">0</td>' +
+    '<td id="vpm_sum_ea">0</td><td id="vpm_sum_ra">0</td>' +
+    '<td id="vpm_sum_te">0</td><td id="vpm_sum_tr">0</td></tr></tfoot>';
+  tbl.innerHTML = html;
+}
+
+function recalcVpmRow(i){
+  const ev = Number(document.getElementById('vpm_ev_'+i).value)||0;
+  const rv = Number(document.getElementById('vpm_rv_'+i).value)||0;
+  const ep = Number(document.getElementById('vpm_ep_'+i).value)||0;
+  const rp = Number(document.getElementById('vpm_rp_'+i).value)||0;
+  const ea = Number(document.getElementById('vpm_ea_'+i).value)||0;
+  const ra = Number(document.getElementById('vpm_ra_'+i).value)||0;
+  document.getElementById('vpm_te_'+i).textContent = fmt(ev+ep+ea);
+  document.getElementById('vpm_tr_'+i).textContent = fmt(rv+rp+ra);
+  recalcVpmTotals();
+}
+
+function readVpmRows(){
+  const calibres = CALIBRE_SETS[state.tipo];
+  return calibres.map((c,i)=>({
+    calibre: c,
+    ev: Number(document.getElementById('vpm_ev_'+i).value)||0,
+    rv: Number(document.getElementById('vpm_rv_'+i).value)||0,
+    ep: Number(document.getElementById('vpm_ep_'+i).value)||0,
+    rp: Number(document.getElementById('vpm_rp_'+i).value)||0,
+    ea: Number(document.getElementById('vpm_ea_'+i).value)||0,
+    ra: Number(document.getElementById('vpm_ra_'+i).value)||0
+  }));
+}
+
+function recalcVpmTotals(){
+  const rows = readVpmRows();
+  let sEv=0,sRv=0,sEp=0,sRp=0,sEa=0,sRa=0;
+  rows.forEach(r=>{ sEv+=r.ev; sRv+=r.rv; sEp+=r.ep; sRp+=r.rp; sEa+=r.ea; sRa+=r.ra; });
+  document.getElementById('vpm_sum_ev').textContent = fmt(sEv);
+  document.getElementById('vpm_sum_rv').textContent = fmt(sRv);
+  document.getElementById('vpm_sum_ep').textContent = fmt(sEp);
+  document.getElementById('vpm_sum_rp').textContent = fmt(sRp);
+  document.getElementById('vpm_sum_ea').textContent = fmt(sEa);
+  document.getElementById('vpm_sum_ra').textContent = fmt(sRa);
+  document.getElementById('vpm_sum_te').textContent = fmt(sEv+sEp+sEa);
+  document.getElementById('vpm_sum_tr').textContent = fmt(sRv+sRp+sRa);
+}
+
+function fillVpmForm(rows){
+  rows.forEach((r,i)=>{
+    document.getElementById('vpm_ev_'+i).value = r.ev;
+    document.getElementById('vpm_rv_'+i).value = r.rv;
+    document.getElementById('vpm_ep_'+i).value = r.ep;
+    document.getElementById('vpm_rp_'+i).value = r.rp;
+    document.getElementById('vpm_ea_'+i).value = r.ea;
+    document.getElementById('vpm_ra_'+i).value = r.ra;
+    recalcVpmRow(i);
+  });
+}
+
+function clearVpmForm(){
+  const calibres = CALIBRE_SETS[state.tipo];
+  calibres.forEach((c,i)=>{
+    ['ev','rv','ep','rp','ea','ra'].forEach(k=>{ document.getElementById('vpm_'+k+'_'+i).value = 0; });
+    recalcVpmRow(i);
+  });
+}
+
+function vpmKey(fecha, tipo){ return 'vpm:'+fecha+':'+tipo; }
+
+async function getEffectiveVpmRows(fecha, tipo){
+  try{
+    const res = await window.storage.get(vpmKey(fecha, tipo));
+    const data = res ? JSON.parse(res.value) : null;
+    if(data && data.rows) return data.rows;
+  }catch(e){ /* no hay captura manual guardada */ }
+  if(importedVpm[fecha] && importedVpm[fecha][tipo]) return importedVpm[fecha][tipo];
+  return null;
+}
+
+async function loadCurrentVpm(){
+  const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
+
+  if(rows){
+    fillVpmForm(rows);
+    renderVpmSummary(rows);
+  } else {
+    clearVpmForm();
+    document.getElementById('vpmSummaryPanel').style.display = 'none';
+  }
+  refreshVpmHistory();
+}
+
+async function saveVpm(){
+  const rows = readVpmRows();
+  try{
+    await window.storage.set(vpmKey(state.fecha, state.tipo), JSON.stringify({rows}));
+    setStatus('Guardado');
+    renderVpmSummary(rows);
+    refreshVpmHistory();
+  }catch(e){
+    setStatus('No se pudo guardar');
+  }
+}
+
+function computeVpmMetrics(rows){
+  const perCalibre = rows.map(r=>{
+    const totalEst = r.ev+r.ep+r.ea;
+    const totalReal = r.rv+r.rp+r.ra;
+    return {calibre:r.calibre, totalEst, totalReal};
+  });
+  const grandEst = perCalibre.reduce((a,r)=>a+r.totalEst,0);
+  const grandReal = perCalibre.reduce((a,r)=>a+r.totalReal,0);
+  const colorTotals = {
+    verde: {est: rows.reduce((a,r)=>a+r.ev,0), real: rows.reduce((a,r)=>a+r.rv,0)},
+    pintona: {est: rows.reduce((a,r)=>a+r.ep,0), real: rows.reduce((a,r)=>a+r.rp,0)},
+    alto: {est: rows.reduce((a,r)=>a+r.ea,0), real: rows.reduce((a,r)=>a+r.ra,0)}
+  };
+  return {perCalibre, grandEst, grandReal, colorTotals};
+}
+
+function desfaseBadge(est, real){
+  const r = est>0 ? real/est : 0;
+  const pct = Math.round(r*100);
+  const cls = isRatioBad(est>0?r:null) || (est===0 && real>0) ? 'badge-bad' : 'badge-ok';
+  return '<span class="desf-badge '+cls+'">'+pct+'%</span>';
+}
+
+function renderVpmDetailTable(rows){
+  const tbl = document.getElementById('vpmDetailTable');
+  let html = '<thead><tr>' +
+    '<th rowspan="2" style="text-align:left;">Calibre</th>' +
+    '<th colspan="3" class="grp-verde">Verde (0.0-1.0)</th>' +
+    '<th colspan="3" class="grp-pintona">Pintón (1.5-2.5)</th>' +
+    '<th colspan="3" class="grp-alto">Alto (3.0-4.0)</th>' +
+    '<th colspan="3" class="grp-total">Total</th>' +
+    '</tr><tr>' +
+    '<th class="grp-verde">Est.</th><th class="grp-verde">Real</th><th class="grp-verde">Desf.</th>' +
+    '<th class="grp-pintona">Est.</th><th class="grp-pintona">Real</th><th class="grp-pintona">Desf.</th>' +
+    '<th class="grp-alto">Est.</th><th class="grp-alto">Real</th><th class="grp-alto">Desf.</th>' +
+    '<th class="grp-total">Est.</th><th class="grp-total">Real</th><th class="grp-total">Desf.</th>' +
+    '</tr></thead><tbody>';
+
+  let sEv=0,sRv=0,sEp=0,sRp=0,sEa=0,sRa=0;
+  rows.forEach(r=>{
+    const te = r.ev+r.ep+r.ea, tr = r.rv+r.rp+r.ra;
+    sEv+=r.ev; sRv+=r.rv; sEp+=r.ep; sRp+=r.rp; sEa+=r.ea; sRa+=r.ra;
+    html += '<tr>' +
+      '<td class="left">'+r.calibre+'</td>' +
+      '<td class="kgcell">'+fmt(r.ev)+'</td><td class="kgcell">'+fmt(r.rv)+'</td><td>'+desfaseBadge(r.ev,r.rv)+'</td>' +
+      '<td class="kgcell">'+fmt(r.ep)+'</td><td class="kgcell">'+fmt(r.rp)+'</td><td>'+desfaseBadge(r.ep,r.rp)+'</td>' +
+      '<td class="kgcell">'+fmt(r.ea)+'</td><td class="kgcell">'+fmt(r.ra)+'</td><td>'+desfaseBadge(r.ea,r.ra)+'</td>' +
+      '<td class="kgcell">'+fmt(te)+'</td><td class="kgcell">'+fmt(tr)+'</td><td>'+desfaseBadge(te,tr)+'</td>' +
+      '</tr>';
+  });
+
+  const sTe = sEv+sEp+sEa, sTr = sRv+sRp+sRa;
+  html += '</tbody><tfoot><tr>' +
+    '<td class="left">Total general</td>' +
+    '<td class="kgcell">'+fmt(sEv)+'</td><td class="kgcell">'+fmt(sRv)+'</td><td>'+desfaseBadge(sEv,sRv)+'</td>' +
+    '<td class="kgcell">'+fmt(sEp)+'</td><td class="kgcell">'+fmt(sRp)+'</td><td>'+desfaseBadge(sEp,sRp)+'</td>' +
+    '<td class="kgcell">'+fmt(sEa)+'</td><td class="kgcell">'+fmt(sRa)+'</td><td>'+desfaseBadge(sEa,sRa)+'</td>' +
+    '<td class="kgcell">'+fmt(sTe)+'</td><td class="kgcell">'+fmt(sTr)+'</td><td>'+desfaseBadge(sTe,sTr)+'</td>' +
+    '</tr></tfoot>';
+  tbl.innerHTML = html;
+}
+
+function renderVpmSummary(rows){
+  const m = computeVpmMetrics(rows);
+  document.getElementById('vpmSummaryPanel').style.display = '';
+
+  const cumplGlobal = m.grandEst>0 ? m.grandReal/m.grandEst : 0;
+  const diffGlobal = m.grandReal - m.grandEst;
+  document.getElementById('vpmKpiRow').innerHTML =
+    kpiCard('Total estimado', fmt(m.grandEst)+' kg', '') +
+    kpiCard('Total real', fmt(m.grandReal)+' kg', '') +
+    kpiCard('Cumplimiento global', fmtPct(cumplGlobal), (diffGlobal>=0?'up':'down'), (diffGlobal>=0?'+':'')+fmt(diffGlobal)+' kg vs estimado');
+
+  document.getElementById('vpmDiffRow').innerHTML = COLOR_KEYS.map(ck=>{
+    const t = m.colorTotals[ck.key];
+    const diff = t.real - t.est;
+    const pct = t.est>0 ? t.real/t.est : 0;
+    return diffCard(ck.key, ck.label, t.est, t.real, diff, pct);
+  }).join('');
+
+  renderVpmDetailTable(rows);
+}
+
+function kpiCard(label, value, trendClass, sub){
+  return '<div class="kpi"><div class="lbl">'+label+'</div><div class="val">'+value+'</div>' +
+    (sub ? '<div class="sub '+(trendClass||'')+'">'+sub+'</div>' : '') + '</div>';
+}
+
+function diffCard(key, label, est, real, diff, pct){
+  const sign = diff>=0 ? '+' : '';
+  const cls = diff>=0 ? 'pos' : 'neg';
+  return '<div class="diff-card '+key+'">' +
+    '<div class="name">'+label+'</div>' +
+    '<div class="nums">Estimado '+fmt(est)+' kg &middot; Real '+fmt(real)+' kg</div>' +
+    '<div class="delta '+cls+'">'+sign+fmt(diff)+' kg</div>' +
+    '<div class="nums">'+fmtPct(pct)+' cumplimiento</div>' +
+    '</div>';
+}
+
+function colorForRatio(r){
+  if(r==null) return '#8a969c';
+  if(r>=0.95 && r<=1.05) return '#1f6236';
+  return '#8a281c';
+}
+
+function isRatioBad(r){
+  return r==null ? false : (r<0.95 || r>1.05);
+}
+
+function ratioLabelPlugin(ratios, horizontal){
+  return {
+    id: 'ratioLabels_'+Math.random().toString(36).slice(2),
+    afterDatasetsDraw(chart){
+      const meta0 = chart.getDatasetMeta(0), meta1 = chart.getDatasetMeta(1);
+      if(!meta0 || !meta1) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = '700 11px Inter, sans-serif';
+      ctx.textBaseline = 'middle';
+      ratios.forEach((r,i)=>{
+        const el0 = meta0.data[i], el1 = meta1.data[i];
+        if(!el0 || !el1) return;
+        const label = r==null ? 's/d' : Math.round(r*100)+'%';
+        ctx.fillStyle = colorForRatio(r);
+        if(horizontal){
+          ctx.textAlign = 'left';
+          const x = Math.max(el0.x, el1.x) + 10;
+          const y = (el0.y + el1.y)/2;
+          ctx.fillText(label, x, y);
+        } else {
+          ctx.textAlign = 'center';
+          const x = (el0.x + el1.x)/2;
+          const y = Math.min(el0.y, el1.y) - 16;
+          ctx.fillText(label, x, y);
+        }
+      });
+      ctx.restore();
+    }
+  };
+}
+
+function renderVpmCalibreChart(perCalibre){
+  const ctx = document.getElementById('vpmCalibreChart');
+  if(vpmChartCalibre) vpmChartCalibre.destroy();
+  const ratios = perCalibre.map(r=> r.totalEst>0 ? r.totalReal/r.totalEst : null);
+  const maxVal = Math.max(1, ...perCalibre.map(r=>Math.max(r.totalEst,r.totalReal)));
+  vpmChartCalibre = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: perCalibre.map(r=>r.calibre),
+      datasets: [
+        {label:'Estimado', data: perCalibre.map(r=>r.totalEst), backgroundColor:'#3266ad', borderRadius:4},
+        {label:'Real', data: perCalibre.map(r=>r.totalReal), backgroundColor:'#eb6834', borderRadius:4}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:26 } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+fmt(c.raw)+' kg'}},
+        datalabels:{ anchor:'end', align:'end', offset:2, color:'#5c6b73', font:{size:10,weight:'600'}, formatter:(v)=>fmt(v) }
+      },
+      scales:{ y:{ beginAtZero:true, suggestedMax:maxVal*1.22, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>fmt(v)} }, x:{ grid:{display:false} } }
+    },
+    plugins: [ratioLabelPlugin(ratios, false)]
+  });
+}
+
+function renderVpmColorChart(colorTotals){
+  const ctx = document.getElementById('vpmColorChart');
+  if(vpmChartColor) vpmChartColor.destroy();
+  const ratios = COLOR_KEYS.map(c=> colorTotals[c.key].est>0 ? colorTotals[c.key].real/colorTotals[c.key].est : null);
+  const maxVal = Math.max(1, ...COLOR_KEYS.map(c=>Math.max(colorTotals[c.key].est,colorTotals[c.key].real)));
+  vpmChartColor = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: COLOR_KEYS.map(c=>c.label),
+      datasets: [
+        {label:'Estimado', data: COLOR_KEYS.map(c=>colorTotals[c.key].est), backgroundColor:'#3266ad', borderRadius:4},
+        {label:'Real', data: COLOR_KEYS.map(c=>colorTotals[c.key].real), backgroundColor:'#eb6834', borderRadius:4}
+      ]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ right:46 } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+fmt(c.raw)+' kg'}},
+        datalabels:{ anchor:'end', align:'end', offset:2, color:'#5c6b73', font:{size:10,weight:'600'}, formatter:(v)=>fmt(v) }
+      },
+      scales:{ x:{ beginAtZero:true, suggestedMax:maxVal*1.28, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>fmt(v)} }, y:{ grid:{display:false} } }
+    },
+    plugins: [ratioLabelPlugin(ratios, true)]
+  });
+}
+
+function handleCsvUpload(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim().length>0);
+      const calibres = CALIBRE_SETS[state.tipo];
+      const map = {};
+      lines.slice(1).forEach(line=>{
+        const parts = line.split(',').map(s=>s.trim());
+        if(parts.length<7) return;
+        map[parts[0]] = parts;
+      });
+      calibres.forEach((c,i)=>{
+        const p = map[c];
+        if(!p) return;
+        document.getElementById('vpm_ev_'+i).value = Number(p[1])||0;
+        document.getElementById('vpm_rv_'+i).value = Number(p[2])||0;
+        document.getElementById('vpm_ep_'+i).value = Number(p[3])||0;
+        document.getElementById('vpm_rp_'+i).value = Number(p[4])||0;
+        document.getElementById('vpm_ea_'+i).value = Number(p[5])||0;
+        document.getElementById('vpm_ra_'+i).value = Number(p[6])||0;
+        recalcVpmRow(i);
+      });
+      setStatus('CSV cargado');
+    }catch(err){
+      setStatus('CSV inválido');
+    }
+    evt.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+async function refreshVpmHistory(){
+  const tbody = document.querySelector('#vpmHistTable tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Cargando…</td></tr>';
+  try{
+    const res = await window.storage.list('vpm:');
+    const keys = (res && res.keys) ? res.keys : [];
+    const entries = keys.map(k=>{
+      const parts = k.split(':');
+      return {key:k, fecha:parts[1], tipo:parts[2]};
+    }).sort((a,b)=> b.fecha.localeCompare(a.fecha)).slice(0,25);
+    if(entries.length===0){
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
+      return;
+    }
+    const rowsHtml = [];
+    for(const en of entries){
+      try{
+        const r = await window.storage.get(en.key);
+        const data = JSON.parse(r.value);
+        const m = computeVpmMetrics(data.rows);
+        const pct = m.grandEst>0 ? m.grandReal/m.grandEst : 0;
+        rowsHtml.push('<tr onclick="loadHistoryRow(\''+en.fecha+'\',\''+en.tipo+'\')">' +
+          '<td>'+en.fecha+'</td><td><span class="tag '+en.tipo+'">'+tipoLabelShort(en.tipo)+'</span></td>' +
+          '<td>'+fmt(m.grandEst)+' kg</td><td>'+fmt(m.grandReal)+' kg</td><td>'+fmtPct(pct)+'</td></tr>');
+      }catch(e){}
+    }
+    tbody.innerHTML = rowsHtml.join('');
+  }catch(e){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
+  }
+}
+
+function tipoLabelShort(key){
+  const t = TIPOS.find(t=>t.key===key);
+  return t ? t.label : key;
+}
+
+function loadHistoryRow(fecha, tipo){
+  document.getElementById('fechaInput').value = fecha;
+  state.fecha = fecha;
+  state.tipo = tipo;
+  onContextChange();
+  switchTab('vpm');
+}
+
+/* ---------------- CUMPLIMIENTO TAB ---------------- */
+
+function renderCumplTables(){
+  const calibres = CALIBRE_SETS[state.tipo];
+  const calTbl = document.getElementById('cumplCalibreTable');
+  let html = '<thead><tr><th class="left">Calibre</th><th>Proyectado %</th><th>Real %</th></tr></thead><tbody>';
+  calibres.forEach((c,i)=>{
+    html += '<tr><td class="left">'+c+'</td>' +
+      '<td><input type="number" step="0.1" min="0" value="0" id="cc_proy_'+i+'"></td>' +
+      '<td><input type="number" step="0.1" min="0" value="0" id="cc_real_'+i+'"></td></tr>';
+  });
+  html += '</tbody>';
+  calTbl.innerHTML = html;
+
+  const colorTbl = document.getElementById('cumplColorTable');
+  let html2 = '<thead><tr><th class="left">Color</th><th>Proyectado %</th><th>Real %</th><th>M.Cal %</th></tr></thead><tbody>';
+  COLOR_KEYS.forEach(ck=>{
+    html2 += '<tr><td class="left">'+ck.label+'</td>' +
+      '<td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_'+ck.key+'"></td>' +
+      '<td><input type="number" step="0.1" min="0" value="0" id="cclr_real_'+ck.key+'"></td>' +
+      '<td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_'+ck.key+'"></td></tr>';
+  });
+  html2 += '</tbody>';
+  colorTbl.innerHTML = html2;
+}
+
+function readCumplData(){
+  const calibres = CALIBRE_SETS[state.tipo];
+  const calibre = calibres.map((c,i)=>({
+    calibre: c,
+    proy: Number(document.getElementById('cc_proy_'+i).value)||0,
+    real: Number(document.getElementById('cc_real_'+i).value)||0
+  }));
+  const color = {};
+  COLOR_KEYS.forEach(ck=>{
+    color[ck.key] = {
+      proy: Number(document.getElementById('cclr_proy_'+ck.key).value)||0,
+      real: Number(document.getElementById('cclr_real_'+ck.key).value)||0,
+      mcal: Number(document.getElementById('cclr_mcal_'+ck.key).value)||0
+    };
+  });
+  return {calibre, color};
+}
+
+function fillCumplForm(data){
+  data.calibre.forEach((r,i)=>{
+    document.getElementById('cc_proy_'+i).value = r.proy;
+    document.getElementById('cc_real_'+i).value = r.real;
+  });
+  COLOR_KEYS.forEach(ck=>{
+    const c = data.color[ck.key] || {proy:0,real:0,mcal:0};
+    document.getElementById('cclr_proy_'+ck.key).value = c.proy;
+    document.getElementById('cclr_real_'+ck.key).value = c.real;
+    document.getElementById('cclr_mcal_'+ck.key).value = c.mcal;
+  });
+}
+
+function clearCumplForm(){
+  const calibres = CALIBRE_SETS[state.tipo];
+  calibres.forEach((c,i)=>{
+    document.getElementById('cc_proy_'+i).value = 0;
+    document.getElementById('cc_real_'+i).value = 0;
+  });
+  COLOR_KEYS.forEach(ck=>{
+    document.getElementById('cclr_proy_'+ck.key).value = 0;
+    document.getElementById('cclr_real_'+ck.key).value = 0;
+    document.getElementById('cclr_mcal_'+ck.key).value = 0;
+  });
+}
+
+function cumplKey(fecha, tipo){ return 'cumpl:'+fecha+':'+tipo; }
+
+function computeCumplFromRows(rows){
+  const grandEst = rows.reduce((a,r)=>a+r.ev+r.ep+r.ea,0);
+  const grandReal = rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
+  const calibre = rows.map(r=>{
+    const te = r.ev+r.ep+r.ea, tr = r.rv+r.rp+r.ra;
+    return {
+      calibre: r.calibre,
+      proy: grandEst>0 ? (te/grandEst*100) : 0,
+      real: grandReal>0 ? (tr/grandReal*100) : 0
+    };
+  });
+  const sums = { verde:{e:0,r:0}, pintona:{e:0,r:0}, alto:{e:0,r:0} };
+  rows.forEach(r=>{
+    sums.verde.e+=r.ev; sums.verde.r+=r.rv;
+    sums.pintona.e+=r.ep; sums.pintona.r+=r.rp;
+    sums.alto.e+=r.ea; sums.alto.r+=r.ra;
+  });
+  const color = {};
+  COLOR_KEYS.forEach(ck=>{
+    const s = sums[ck.key];
+    color[ck.key] = {
+      proy: grandEst>0 ? (s.e/grandEst*100) : 0,
+      real: grandReal>0 ? (s.r/grandReal*100) : 0,
+      mcal: 0
+    };
+  });
+  return {calibre, color};
+}
+
+async function loadCurrentCumpl(){
+  let data = null;
+  try{
+    const res = await window.storage.get(cumplKey(state.fecha, state.tipo));
+    const stored = res ? JSON.parse(res.value) : null;
+    if(stored) data = stored;
+  }catch(e){ /* no hay captura manual guardada */ }
+
+  if(!data){
+    const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
+    if(rows) data = computeCumplFromRows(rows);
+  }
+
+  if(data){
+    fillCumplForm(data);
+    renderCumplSummary(data);
+  } else {
+    clearCumplForm();
+    document.getElementById('cumplSummaryPanel').style.display = 'none';
+  }
+  refreshCumplHistory();
+}
+
+async function saveCumpl(){
+  const data = readCumplData();
+  try{
+    await window.storage.set(cumplKey(state.fecha, state.tipo), JSON.stringify(data));
+    setStatus('Guardado');
+    renderCumplSummary(data);
+    refreshCumplHistory();
+  }catch(e){
+    setStatus('No se pudo guardar');
+  }
+}
+
+function renderCumplSummary(data){
+  document.getElementById('cumplSummaryPanel').style.display = '';
+
+  const ctx = document.getElementById('cumplCalibreChart');
+  if(cumplChartCalibre) cumplChartCalibre.destroy();
+  const ratios = data.calibre.map(r=> r.proy>0 ? r.real/r.proy : null);
+  const maxVal = Math.max(1, ...data.calibre.map(r=>Math.max(r.proy,r.real)));
+  cumplChartCalibre = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: data.calibre.map(r=>r.calibre),
+      datasets:[
+        {label:'Proyectado', data:data.calibre.map(r=>r.proy), backgroundColor:'#3266ad', borderRadius:4},
+        {label:'Real', data:data.calibre.map(r=>r.real), backgroundColor:'#eb6834', borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:26 } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+c.raw.toFixed(1)+'%'}},
+        datalabels:{ anchor:'end', align:'end', offset:2, color:'#5c6b73', font:{size:10,weight:'600'}, formatter:(v)=>v.toFixed(1)+'%' }
+      },
+      scales:{ y:{ beginAtZero:true, suggestedMax:maxVal*1.22, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>v+'%'} }, x:{ grid:{display:false} } }
+    },
+    plugins: [ratioLabelPlugin(ratios, false)]
+  });
+
+  const ctxColor = document.getElementById('cumplColorChart');
+  if(cumplChartColor) cumplChartColor.destroy();
+  const colorRatios = COLOR_KEYS.map(ck=>{
+    const c = data.color[ck.key];
+    return c.proy>0 ? c.real/c.proy : null;
+  });
+  const colorMax = Math.max(1, ...COLOR_KEYS.map(ck=>Math.max(data.color[ck.key].proy, data.color[ck.key].real)));
+  cumplChartColor = new Chart(ctxColor, {
+    type:'bar',
+    data:{
+      labels: COLOR_KEYS.map(ck=>ck.label),
+      datasets:[
+        {label:'Proyectado', data: COLOR_KEYS.map(ck=>data.color[ck.key].proy), backgroundColor:'#3266ad', borderRadius:4},
+        {label:'Real', data: COLOR_KEYS.map(ck=>data.color[ck.key].real), backgroundColor:'#eb6834', borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:26 } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+c.raw.toFixed(1)+'%'}},
+        datalabels:{ anchor:'end', align:'end', offset:2, color:'#5c6b73', font:{size:10,weight:'600'}, formatter:(v)=>v.toFixed(1)+'%' }
+      },
+      scales:{ y:{ beginAtZero:true, suggestedMax:colorMax*1.22, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>v+'%'} }, x:{ grid:{display:false} } }
+    },
+    plugins: [ratioLabelPlugin(colorRatios, false)]
+  });
+}
+
+async function refreshCumplHistory(){
+  const tbody = document.querySelector('#cumplHistTable tbody');
+  tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-mute);">Cargando…</td></tr>';
+  try{
+    const res = await window.storage.list('cumpl:');
+    const keys = (res && res.keys) ? res.keys : [];
+    const entries = keys.map(k=>{
+      const parts = k.split(':');
+      return {key:k, fecha:parts[1], tipo:parts[2]};
+    }).sort((a,b)=> b.fecha.localeCompare(a.fecha)).slice(0,25);
+    if(entries.length===0){
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
+      return;
+    }
+    const rowsHtml = [];
+    for(const en of entries){
+      try{
+        const r = await window.storage.get(en.key);
+        const data = JSON.parse(r.value);
+        const avgCal = data.calibre.reduce((a,c)=>a+(c.proy>0?c.real/c.proy:0),0)/data.calibre.length;
+        const avgColor = COLOR_KEYS.reduce((a,ck)=>{
+          const c = data.color[ck.key];
+          return a + (c.proy>0? c.real/c.proy : 0);
+        },0)/COLOR_KEYS.length;
+        rowsHtml.push('<tr onclick="loadHistoryRowCumpl(\''+en.fecha+'\',\''+en.tipo+'\')">' +
+          '<td>'+en.fecha+'</td><td><span class="tag '+en.tipo+'">'+tipoLabelShort(en.tipo)+'</span></td>' +
+          '<td>'+fmtPct(avgCal)+'</td><td>'+fmtPct(avgColor)+'</td></tr>');
+      }catch(e){}
+    }
+    tbody.innerHTML = rowsHtml.join('');
+  }catch(e){
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
+  }
+}
+
+function loadHistoryRowCumpl(fecha, tipo){
+  document.getElementById('fechaInput').value = fecha;
+  state.fecha = fecha;
+  state.tipo = tipo;
+  onContextChange();
+  switchTab('cumpl');
+}
+
+function normalizeCalibreKey(k){
+  return String(k).toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+
+async function runFreeOcr(file){
+  const result = await Tesseract.recognize(file, 'eng');
+  return (result.data && result.data.words) ? result.data.words : [];
+}
+
+function clusterOcrRows(words){
+  const items = words
+    .filter(w=>w.text && w.text.trim().length>0 && w.bbox)
+    .map(w=>({ text:w.text.trim(), x:w.bbox.x0, y:(w.bbox.y0+w.bbox.y1)/2 }));
+  items.sort((a,b)=>a.y-b.y);
+  const rows = [];
+  const threshold = 14;
+  items.forEach(it=>{
+    let row = rows.find(r=> Math.abs(r.y - it.y) < threshold);
+    if(!row){ row = {y:it.y, n:0, items:[]}; rows.push(row); }
+    row.y = (row.y*row.n + it.y)/(row.n+1);
+    row.n++;
+    row.items.push(it);
+  });
+  rows.sort((a,b)=>a.y-b.y);
+  rows.forEach(r=> r.items.sort((a,b)=>a.x-b.x));
+  return rows.map(r=> r.items); // array of rows, each an array of {text,x}
+}
+
+function isNumericToken(t){
+  return /^\d+([.,]\d+)*%?$/.test(t);
+}
+
+function parseFloatLoose(s){
+  return parseFloat(s.replace(',', '.'));
+}
+
+function parseKgValue(raw){
+  let cleaned = raw.replace(/%/g,'');
+  cleaned = cleaned.replace(/[.,](\d{3})(?!\d)/g, '$1'); // quita separadores de miles
+  cleaned = cleaned.replace(/[^\d]/g,'');
+  const n = parseInt(cleaned,10);
+  return isNaN(n) ? 0 : n;
+}
+
+// Clasifica un encabezado de columna: color suelto (0,0.5,1,1.5,2,2.5,3,4) o rango agrupado (0.0-1.0, 1.5-2.5, 3.0-4.0)
+function classifyHeaderToken(text){
+  const raw = text.trim();
+  if(/total/i.test(raw)) return 'total';
+  if(raw.indexOf('%')>=0) return null;
+  if(raw.indexOf('-')>=0){
+    const parts = raw.split('-');
+    if(parts.length===2){
+      const left = parseFloatLoose(parts[0].replace(/[^\d.,]/g,''));
+      const right = parseFloatLoose(parts[1].replace(/[^\d.,]/g,''));
+      if(!isNaN(left) && !isNaN(right)){
+        const mid = (left+right)/2;
+        if(mid<=1.3) return 'verde_grupo';
+        if(mid<=2.7) return 'pintona_grupo';
+        return 'alto_grupo';
+      }
+    }
+    return null;
+  }
+  const v = parseFloatLoose(raw.replace(/[^\d.,]/g,''));
+  if(isNaN(v)) return null;
+  if(v<=1.1) return 'verde_suelto';
+  if(v>=1.4 && v<=2.6) return 'pintona_suelto';
+  if(v>=2.9) return 'alto_suelto';
+  return null;
+}
+
+function bucketOf(type){
+  if(type==='verde_suelto' || type==='verde_grupo') return 'verde';
+  if(type==='pintona_suelto' || type==='pintona_grupo') return 'pintona';
+  if(type==='alto_suelto' || type==='alto_grupo') return 'alto';
+  return null;
+}
+
+async function handleImageUpload(evt, mode){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('imageReadStatus');
+  statusEl.textContent = 'Leyendo imagen (OCR gratis)… puede tardar unos segundos.';
+  try{
+    const words = await runFreeOcr(file);
+    const rows = clusterOcrRows(words);
+    if(rows.length < 2) throw new Error('No se detectaron suficientes filas en la imagen.');
+
+    const headerCols = rows[0]
+      .map(tok=>({x:tok.x, type:classifyHeaderToken(tok.text)}))
+      .filter(c=>c.type);
+
+    const dataRows = rows.slice(1);
+    const calibres = CALIBRE_SETS[state.tipo];
+
+    // Para cada fila de datos, calcula los totales de verde/pintón/alto según la columna real de cada número
+    const rowSums = dataRows.map(row=>{
+      const nums = row.filter(tok=>isNumericToken(tok.text));
+      if(nums.length===0) return null;
+      const sums = {verde:0, pintona:0, alto:0};
+      let matched = 0;
+      nums.forEach(tok=>{
+        if(headerCols.length>0){
+          let best = null, bestDist = Infinity;
+          headerCols.forEach(h=>{
+            const d = Math.abs(h.x - tok.x);
+            if(d<bestDist){ bestDist=d; best=h; }
+          });
+          const bucket = best ? bucketOf(best.type) : null;
+          if(bucket){ sums[bucket] += parseKgValue(tok.text); matched++; }
+        }
+      });
+      return matched>0 ? {sums, matched} : null;
+    });
+
+    const qualifying = rowSums.filter(r=>r!==null);
+
+    let filled = 0;
+    calibres.forEach((c,i)=>{
+      const r = qualifying[i];
+      if(!r) return;
+      const {verde, pintona, alto} = r.sums;
+      if(mode==='estimado'){
+        document.getElementById('vpm_ev_'+i).value = verde||0;
+        document.getElementById('vpm_ep_'+i).value = pintona||0;
+        document.getElementById('vpm_ea_'+i).value = alto||0;
+      } else {
+        document.getElementById('vpm_rv_'+i).value = verde||0;
+        document.getElementById('vpm_rp_'+i).value = pintona||0;
+        document.getElementById('vpm_ra_'+i).value = alto||0;
+      }
+      recalcVpmRow(i);
+      filled++;
+    });
+
+    if(headerCols.length===0){
+      statusEl.textContent = 'No reconocí los encabezados de color de la tabla — revisa manualmente. (' + filled + ' de ' + calibres.length + ' filas con algún dato)';
+    } else {
+      statusEl.textContent = filled + ' de ' + calibres.length + ' calibres digitados (' + headerCols.length + ' columnas de color detectadas, incluyendo sueltas y agrupadas). Compara con la foto antes de guardar.';
+    }
+  }catch(err){
+    statusEl.textContent = 'No se pudo leer la imagen: ' + (err && err.message ? err.message : err);
+  }
+  evt.target.value = '';
+}
+
+/* ---------------- LECTURA DE IMÁGENES CON IA DE PAGO (opcional) ---------------- */
+
+async function saveApiKey(){
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if(!val){ setStatus('Escribe una llave primero'); return; }
+  await window.storage.set('settings:apiKey', val);
+  document.getElementById('apiKeyInput').value = '';
+  refreshApiKeyStatus();
+  setStatus('Llave guardada');
+}
+
+async function clearApiKey(){
+  try{ await window.storage.delete('settings:apiKey'); }catch(e){}
+  refreshApiKeyStatus();
+  setStatus('Llave borrada');
+}
+
+async function getApiKey(){
+  try{
+    const res = await window.storage.get('settings:apiKey');
+    return res ? res.value : null;
+  }catch(e){ return null; }
+}
+
+async function refreshApiKeyStatus(){
+  const key = await getApiKey();
+  const el = document.getElementById('apiKeyStatus');
+  if(!el) return;
+  el.textContent = key ? ('Llave configurada (termina en …' + key.slice(-4) + ')') : 'Sin llave configurada todavía.';
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function buildExtractionPrompt(tipo, mode){
+  const calibres = CALIBRE_SETS[tipo];
+  const modeLabel = mode==='estimado' ? 'ESTIMADO (proyectado)' : 'REAL (cosechado)';
+  return 'Esta es una foto o captura de una tabla de cosecha de piña, con los kilos ' + modeLabel + ' por calibre y por color de madurez.\n' +
+  'Los calibres que debes buscar son (pueden aparecer con nombres distintos, por ejemplo "01_Primera", "PRIMERA", "Piña AD1", "piña special 1ra", etc. — identifícalos por su posición/orden y significado, no por el texto exacto): ' + JSON.stringify(calibres) + '\n' +
+  'Las columnas de color pueden venir ya agrupadas como "0,0-1,0" / "1,5-2,5" / "3,0-4,0", o sueltas por valor individual. Si vienen sueltas, agrúpalas así: los valores 0, 0.5 y 1 van al grupo "verde"; los valores 1.5, 2 y 2.5 van al grupo "pintona"; los valores 3 y 4 van al grupo "alto".\n' +
+  'Si algún calibre no aparece en la imagen o su celda está vacía o con guion "-", usa 0.\n' +
+  'Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin explicaciones, sin bloque de código, con esta forma exacta (una clave por cada calibre de la lista, en el mismo orden):\n' +
+  '{"' + calibres[0] + '":{"verde":0,"pintona":0,"alto":0}, "' + calibres[1] + '":{"verde":0,"pintona":0,"alto":0}, ...}';
+}
+
+async function callClaudeVision(base64, mediaType, promptText, apiKey){
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-sonnet-5',
+      max_tokens:1024,
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image', source:{type:'base64', media_type:mediaType, data:base64}},
+          {type:'text', text:promptText}
+        ]
+      }]
+    })
+  });
+  if(!resp.ok){
+    const errText = await resp.text();
+    throw new Error('HTTP '+resp.status+': '+errText.slice(0,200));
+  }
+  const data = await resp.json();
+  const textBlock = (data.content||[]).find(b=>b.type==='text');
+  if(!textBlock) throw new Error('La respuesta no trajo texto.');
+  let raw = textBlock.text.trim();
+  raw = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  return JSON.parse(raw);
+}
+
+async function handleImageUploadPaid(evt, mode){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('imageReadStatus');
+  const apiKey = await getApiKey();
+  if(!apiKey){
+    statusEl.textContent = 'Primero configura tu llave de API arriba en "Lectura con IA de pago".';
+    evt.target.value = '';
+    return;
+  }
+  statusEl.textContent = 'Leyendo imagen con IA…';
+  try{
+    const base64 = await fileToBase64(file);
+    const prompt = buildExtractionPrompt(state.tipo, mode);
+    const result = await callClaudeVision(base64, file.type||'image/jpeg', prompt, apiKey);
+
+    const calibres = CALIBRE_SETS[state.tipo];
+    const normMap = {};
+    Object.keys(result).forEach(k=>{ normMap[normalizeCalibreKey(k)] = result[k]; });
+
+    let filled = 0;
+    calibres.forEach((c,i)=>{
+      const entry = result[c] || normMap[normalizeCalibreKey(c)];
+      if(!entry) return;
+      const verde = Number(entry.verde)||0, pintona = Number(entry.pintona)||0, alto = Number(entry.alto)||0;
+      if(mode==='estimado'){
+        document.getElementById('vpm_ev_'+i).value = verde;
+        document.getElementById('vpm_ep_'+i).value = pintona;
+        document.getElementById('vpm_ea_'+i).value = alto;
+      } else {
+        document.getElementById('vpm_rv_'+i).value = verde;
+        document.getElementById('vpm_rp_'+i).value = pintona;
+        document.getElementById('vpm_ra_'+i).value = alto;
+      }
+      recalcVpmRow(i);
+      filled++;
+    });
+    statusEl.textContent = 'Listo: se digitaron ' + filled + ' de ' + calibres.length + ' calibres (' + (mode==='estimado'?'Estimado':'Real') + '). Revisa y guarda.';
+  }catch(err){
+    statusEl.textContent = 'No se pudo leer la imagen: ' + err.message;
+  }
+  evt.target.value = '';
+}
+
+/* ---------------- FUENTE EN VIVO (GOOGLE SHEETS) ---------------- */
+
+let liveRefreshTimer = null;
+
+function extractSheetId(input){
+  const raw = input.trim();
+  const m = raw.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if(m) return m[1];
+  return raw; // asumimos que ya es el ID puro
+}
+
+function parseCsvSimple(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += ch;
+    } else {
+      if(ch === '"') inQuotes = true;
+      else if(ch === ','){ row.push(field); field=''; }
+      else if(ch === '\n' || ch === '\r'){
+        if(ch === '\r' && text[i+1] === '\n') i++;
+        row.push(field); field='';
+        if(row.length>1 || row[0]!=='') rows.push(row);
+        row = [];
+      } else field += ch;
+    }
+  }
+  if(field.length>0 || row.length>0){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function dateKeyFromCsvString(s){
+  const t = String(s||'').trim();
+  if(!t) return null;
+  if(/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0,10);
+  const d = new Date(t);
+  if(!isNaN(d.getTime())){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return null;
+}
+
+function fetchGvizViaJsonp(url, timeoutMs){
+  return new Promise((resolve, reject)=>{
+    const cbName = 'gvizCb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+    let finished = false;
+    const timer = setTimeout(()=>{
+      if(finished) return;
+      finished = true;
+      cleanup();
+      reject(new Error('Se agotó el tiempo de espera leyendo la hoja. Verifica que esté compartida como "Cualquiera con el enlace puede ver".'));
+    }, timeoutMs||15000);
+
+    function cleanup(){
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    }
+
+    window[cbName] = function(response){
+      if(finished) return;
+      finished = true;
+      cleanup();
+      resolve(response);
+    };
+
+    const script = document.createElement('script');
+    script.src = url + (url.indexOf('?')>=0 ? '&' : '?') + 'tqx=responseHandler:' + cbName;
+    script.onerror = function(){
+      if(finished) return;
+      finished = true;
+      cleanup();
+      reject(new Error('No se pudo cargar la hoja. Verifica que esté compartida como "Cualquiera con el enlace puede ver" y que el enlace sea correcto.'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+function gvizValueToString(v){
+  if(v===null || v===undefined) return '';
+  if(typeof v === 'string'){
+    const m = v.match(/^Date\((\d+),(\d+),(\d+)\)/);
+    if(m){
+      const y=+m[1], mo=+m[2], d=+m[3];
+      return y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    }
+    return v;
+  }
+  return String(v);
+}
+
+function gvizTableToRows(table){
+  if(!table || !table.rows) return [];
+  return table.rows.map(row=> (row.c||[]).map(cell=> cell ? gvizValueToString(cell.v) : ''));
+}
+
+async function fetchLiveSheetData(sheetId){
+  const url = 'https://docs.google.com/spreadsheets/d/'+sheetId+'/gviz/tq?sheet='+encodeURIComponent('Base VPM')+'&headers=2';
+  const response = await fetchGvizViaJsonp(url, 15000);
+
+  if(!response || response.status === 'error'){
+    const reason = (response && response.errors && response.errors[0] && response.errors[0].detailed_message) || 'la hoja no se pudo leer';
+    throw new Error('Google Sheets respondió con un error: ' + reason + '. Verifica que exista la pestaña "Base VPM" y que esté compartida como "Cualquiera con el enlace puede ver".');
+  }
+
+  const rows = gvizTableToRows(response.table);
+  if(rows.length===0) throw new Error('La hoja "Base VPM" está vacía o no se pudo interpretar.');
+
+  // Misma estructura de columnas que tu Excel: 1 Fecha, 5 Calibre, 6 Est 0-1, 7 Real 0-1, 9 Est 1.5-2.5, 10 Real 1.5-2.5, 12 Est 3-4, 13 Real 3-4
+  const acc = {};
+  const unmapped = new Set();
+  let mappedCount = 0;
+  for(let i=0;i<rows.length;i++){
+    const r = rows[i];
+    if(!r || !r[0]) continue;
+    const fecha = dateKeyFromCsvString(r[0]);
+    if(!fecha) continue;
+    const rawCal = (r[4]||'').trim();
+    if(!rawCal) continue;
+    const map = CALIBRE_MAP[rawCal];
+    if(!map){ unmapped.add(rawCal); continue; }
+    const ev = Number(r[5])||0;
+    const rv = Number(r[6])||0;
+    const ep = Number(r[8])||0;
+    const rp = Number(r[9])||0;
+    const ea = Number(r[11])||0;
+    const ra = Number(r[12])||0;
+
+    acc[fecha] = acc[fecha] || {};
+    acc[fecha][map.tipo] = acc[fecha][map.tipo] || {};
+    const cur = acc[fecha][map.tipo][map.cal] || {ev:0,rv:0,ep:0,rp:0,ea:0,ra:0};
+    cur.ev+=ev; cur.rv+=rv; cur.ep+=ep; cur.rp+=rp; cur.ea+=ea; cur.ra+=ra;
+    acc[fecha][map.tipo][map.cal] = cur;
+    mappedCount++;
+  }
+
+  if(mappedCount===0){
+    throw new Error('No reconocí ninguna fila. Revisa que la columna E tenga el calibre (ej. "01_Primera") y la columna A la fecha, igual que en tu Excel.');
+  }
+
+  const out = {};
+  Object.keys(acc).forEach(fecha=>{
+    out[fecha] = {};
+    Object.keys(acc[fecha]).forEach(tipo=>{
+      const calibres = CALIBRE_SETS[tipo] || CALIBRE_SETS.normal;
+      out[fecha][tipo] = calibres.map(c=>{
+        const v = acc[fecha][tipo][c] || {ev:0,rv:0,ep:0,rp:0,ea:0,ra:0};
+        return {calibre:c, ev:v.ev, rv:v.rv, ep:v.ep, rp:v.rp, ea:v.ea, ra:v.ra};
+      });
+    });
+  });
+  return out;
+}
+
+async function refreshLiveSheet(silent){
+  const sheetId = (typeof window.__EMBEDDED_SHEET_ID__ !== 'undefined' && window.__EMBEDDED_SHEET_ID__) || await getSetting('sheetId');
+  if(!sheetId) return;
+  const statusEl = document.getElementById('liveSheetStatus');
+  if(!silent) statusEl.textContent = 'Actualizando desde Google Sheets…';
+  try{
+    importedVpm = await fetchLiveSheetData(sheetId);
+    populateImportedDatesUI('conectado en vivo a Google Sheets', '');
+    statusEl.textContent = 'Conectado. Última actualización: ' + new Date().toLocaleTimeString('es-CO');
+    document.getElementById('exportSheetRow').style.display = '';
+  }catch(err){
+    statusEl.textContent = 'Error al actualizar: ' + err.message;
+  }
+}
+
+async function connectLiveSheet(){
+  const raw = document.getElementById('sheetIdInput').value;
+  if(!raw.trim()){ setStatus('Pega el enlace o ID de la hoja primero'); return; }
+  const sheetId = extractSheetId(raw);
+  await window.storage.set('settings:sheetId', sheetId);
+  document.getElementById('sheetIdInput').value = '';
+  await refreshLiveSheet(false);
+  if(liveRefreshTimer) clearInterval(liveRefreshTimer);
+  liveRefreshTimer = setInterval(()=>refreshLiveSheet(true), 1*60*1000);
+}
+
+function exportWithEmbeddedSheet(){
+  getSetting('sheetId').then(stored=>{
+    const sheetId = (typeof window.__EMBEDDED_SHEET_ID__ !== 'undefined' && window.__EMBEDDED_SHEET_ID__) || stored;
+    if(!sheetId){ setStatus('Conecta una hoja primero'); return; }
+    const dataBlock = '<script>window.__EMBEDDED_SHEET_ID__ = ' + JSON.stringify(sheetId) + ';</' + 'script>\n';
+    let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    html = html.replace('<body>', '<body>\n' + dataBlock);
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cumplimiento_cosecha_en_vivo.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    setStatus('Copia descargada');
+  });
+}
+
+async function disconnectLiveSheet(){
+  try{ await window.storage.delete('settings:sheetId'); }catch(e){}
+  if(liveRefreshTimer){ clearInterval(liveRefreshTimer); liveRefreshTimer=null; }
+  document.getElementById('liveSheetStatus').textContent = 'Sin conectar todavía.';
+  document.getElementById('exportSheetRow').style.display = 'none';
+  setStatus('Desconectado');
+}
+
+async function getSetting(key){
+  try{
+    const res = await window.storage.get('settings:'+key);
+    return res ? res.value : null;
+  }catch(e){ return null; }
+}
+
+/* ---------------- CARGA DE EXCEL ---------------- */
+
+function dateKeyFromCell(v){
+  let d;
+  if(v instanceof Date){ d = v; }
+  else if(typeof v === 'number'){ d = new Date(Math.round((v-25569)*86400*1000)); }
+  else { return null; }
+  if(isNaN(d.getTime())) return null;
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function handleExcelUpload(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  document.getElementById('excelStatus').textContent = 'Leyendo archivo…';
+  document.getElementById('excelWarning').style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const sheetName = wb.SheetNames.find(n=>n.trim().toLowerCase()==='base vpm') || wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:null});
+
+      const acc = {};
+      let unmapped = new Set();
+      let mappedCount = 0;
+
+      for(let i=2;i<rows.length;i++){
+        const r = rows[i];
+        if(!r || r[0]==null) continue;
+        const fecha = dateKeyFromCell(r[0]);
+        if(!fecha) continue;
+        const rawCal = r[4]!=null ? String(r[4]).trim() : '';
+        if(!rawCal) continue;
+        const map = CALIBRE_MAP[rawCal];
+        if(!map){ unmapped.add(rawCal); continue; }
+        const ev = Number(r[5])||0, rv = Number(r[6])||0;
+        const ep = Number(r[8])||0, rp = Number(r[9])||0;
+        const ea = Number(r[11])||0, ra = Number(r[12])||0;
+
+        acc[fecha] = acc[fecha] || {};
+        acc[fecha][map.tipo] = acc[fecha][map.tipo] || {};
+        const cur = acc[fecha][map.tipo][map.cal] || {ev:0,rv:0,ep:0,rp:0,ea:0,ra:0};
+        cur.ev += ev; cur.rv += rv; cur.ep += ep; cur.rp += rp; cur.ea += ea; cur.ra += ra;
+        acc[fecha][map.tipo][map.cal] = cur;
+        mappedCount++;
+      }
+
+      importedVpm = {};
+      Object.keys(acc).forEach(fecha=>{
+        importedVpm[fecha] = {};
+        Object.keys(acc[fecha]).forEach(tipo=>{
+          const calibres = CALIBRE_SETS[tipo];
+          importedVpm[fecha][tipo] = calibres.map(c=>{
+            const v = acc[fecha][tipo][c] || {ev:0,rv:0,ep:0,rp:0,ea:0,ra:0};
+            return {calibre:c, ev:v.ev, rv:v.rv, ep:v.ep, rp:v.rp, ea:v.ea, ra:v.ra};
+          });
+        });
+      });
+
+      let warningMsg = '';
+      if(unmapped.size>0){
+        warningMsg = 'No reconocí ' + unmapped.size + ' calibre(s), se omitieron: ' + Array.from(unmapped).slice(0,10).join(', ');
+      }
+      populateImportedDatesUI(mappedCount + ' filas reconocidas desde "' + sheetName + '"', warningMsg);
+      if(importedDates.length) switchTab('vpm');
+    }catch(err){
+      document.getElementById('excelStatus').textContent = 'No se pudo leer el archivo. Verifica que sea un .xlsx válido.';
+    }
+    evt.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function populateImportedDatesUI(statusMsg, warningMsg){
+  importedDates = Object.keys(importedVpm).sort((a,b)=>b.localeCompare(a));
+
+  const statusEl = document.getElementById('excelStatus');
+  if(statusEl) statusEl.textContent =
+    importedDates.length + ' fechas disponibles' + (statusMsg ? ' (' + statusMsg + ')' : '') + '.';
+
+  const w = document.getElementById('excelWarning');
+  if(w){
+    if(warningMsg){ w.style.display = ''; w.textContent = warningMsg; }
+    else w.style.display = 'none';
+  }
+
+  const sel = document.getElementById('excelDateSelect');
+  if(sel) sel.innerHTML = importedDates.map(f=>'<option value="'+f+'">'+f+'</option>').join('');
+  const dateField = document.getElementById('excelDateField');
+  if(dateField) dateField.style.display = importedDates.length ? '' : 'none';
+  const exportRow = document.getElementById('exportRow');
+  if(exportRow) exportRow.style.display = importedDates.length ? '' : 'none';
+
+  if(importedDates.length){
+    document.getElementById('fechaInput').value = importedDates[0];
+    state.fecha = importedDates[0];
+    onContextChange();
+  }
+}
+
+function exportSelfContainedCopy(){
+  let json = JSON.stringify(importedVpm);
+  json = json.split('</script').join('<\\/script');
+  const dataBlock = '<script>window.__EMBEDDED_VPM_DATA__ = ' + json + ';</' + 'script>\n';
+  let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  html = html.replace('<body>', '<body>\n' + dataBlock);
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cumplimiento_cosecha_' + (importedDates[0]||todayStr()) + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  setStatus('Copia descargada');
+}
+
+function jumpToExcelDate(){
+  const fecha = document.getElementById('excelDateSelect').value;
+  document.getElementById('fechaInput').value = fecha;
+  state.fecha = fecha;
+  onContextChange();
+}
+
+function createLocalStoragePolyfill(prefix){
+  return {
+    async get(key){
+      const raw = localStorage.getItem(prefix+key);
+      if(raw===null) return null;
+      return {key, value: raw, shared:false};
+    },
+    async set(key, value){
+      localStorage.setItem(prefix+key, String(value));
+      return {key, value, shared:false};
+    },
+    async delete(key){
+      localStorage.removeItem(prefix+key);
+      return {key, deleted:true, shared:false};
+    },
+    async list(prefixFilter){
+      const keys = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k && k.indexOf(prefix)===0){
+          const shortKey = k.slice(prefix.length);
+          if(!prefixFilter || shortKey.indexOf(prefixFilter)===0) keys.push(shortKey);
+        }
+      }
+      return {keys, prefix:prefixFilter, shared:false};
+    }
+  };
+}
+
+async function ensureStorage(){
+  let ok = false;
+  if(window.storage && typeof window.storage.set === 'function'){
+    try{
+      await window.storage.set('__healthcheck__', '1');
+      await window.storage.get('__healthcheck__');
+      ok = true;
+    }catch(e){ ok = false; }
+  }
+  if(!ok){
+    window.storage = createLocalStoragePolyfill('cumplimiento_cosecha:');
+  }
+}
+
+/* ---------------- INIT ---------------- */
+document.getElementById('fechaInput').value = todayStr();
+buildTipoChips();
+if(Object.keys(importedVpm).length){
+  populateImportedDatesUI('datos incluidos en este archivo', '');
+}
+ensureStorage().then(async ()=>{
+  refreshApiKeyStatus();
+  const embeddedSheetId = (typeof window.__EMBEDDED_SHEET_ID__ !== 'undefined' && window.__EMBEDDED_SHEET_ID__) || null;
+  const sheetId = embeddedSheetId || await getSetting('sheetId');
+  if(sheetId){
+    await refreshLiveSheet(false);
+    liveRefreshTimer = setInterval(()=>refreshLiveSheet(true), 1*60*1000);
+  }
+  onContextChange();
+});
+</script>
+
+
+</body></html>
