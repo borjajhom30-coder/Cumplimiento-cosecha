@@ -144,7 +144,7 @@ table.entry, table.hist-table{min-width:520px;}
 }
 
 .detail-wrap{overflow-x:auto;}
-table.detail{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px;}
+table.detail{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1120px;}
 table.detail th{text-align:center;font-size:10.5px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.02em;font-weight:700;padding:6px 6px;border-bottom:1px solid var(--line);}
 table.detail th.grp-verde{background:var(--verde-bg);color:var(--verde-deep);}
 table.detail th.grp-pintona{background:var(--pintona-bg);color:var(--pintona-deep);}
@@ -499,6 +499,14 @@ function computeVpmMetrics(rows){
   return {perCalibre, grandEst, grandReal, colorTotals};
 }
 
+function desfaseKgBadge(est, real){
+  const diff = real - est;
+  const sign = diff>0 ? '+' : '';
+  const bad = isRatioBad(est>0 ? real/est : null) || (est===0 && real>0);
+  const cls = bad ? 'badge-bad' : 'badge-ok';
+  return '<span class="desf-badge '+cls+'">'+sign+fmt(diff)+'</span>';
+}
+
 function desfaseBadge(est, real){
   const r = est>0 ? real/est : 0;
   const pct = Math.round(r*100);
@@ -510,15 +518,15 @@ function renderVpmDetailTable(rows){
   const tbl = document.getElementById('vpmDetailTable');
   let html = '<thead><tr>' +
     '<th rowspan="2" style="text-align:left;">Calibre</th>' +
-    '<th colspan="3" class="grp-verde">Verde (0.0-1.0)</th>' +
-    '<th colspan="3" class="grp-pintona">Pintón (1.5-2.5)</th>' +
-    '<th colspan="3" class="grp-alto">Alto (3.0-4.0)</th>' +
-    '<th colspan="3" class="grp-total">Total</th>' +
+    '<th colspan="4" class="grp-verde">Verde (0.0-1.0)</th>' +
+    '<th colspan="4" class="grp-pintona">Pintón (1.5-2.5)</th>' +
+    '<th colspan="4" class="grp-alto">Alto (3.0-4.0)</th>' +
+    '<th colspan="4" class="grp-total">Total</th>' +
     '</tr><tr>' +
-    '<th class="grp-verde">Est.</th><th class="grp-verde">Real</th><th class="grp-verde">Desf.</th>' +
-    '<th class="grp-pintona">Est.</th><th class="grp-pintona">Real</th><th class="grp-pintona">Desf.</th>' +
-    '<th class="grp-alto">Est.</th><th class="grp-alto">Real</th><th class="grp-alto">Desf.</th>' +
-    '<th class="grp-total">Est.</th><th class="grp-total">Real</th><th class="grp-total">Desf.</th>' +
+    '<th class="grp-verde">Est.</th><th class="grp-verde">Real</th><th class="grp-verde">Desf.kg</th><th class="grp-verde">Desf.%</th>' +
+    '<th class="grp-pintona">Est.</th><th class="grp-pintona">Real</th><th class="grp-pintona">Desf.kg</th><th class="grp-pintona">Desf.%</th>' +
+    '<th class="grp-alto">Est.</th><th class="grp-alto">Real</th><th class="grp-alto">Desf.kg</th><th class="grp-alto">Desf.%</th>' +
+    '<th class="grp-total">Est.</th><th class="grp-total">Real</th><th class="grp-total">Desf.kg</th><th class="grp-total">Desf.%</th>' +
     '</tr></thead><tbody>';
 
   let sEv=0,sRv=0,sEp=0,sRp=0,sEa=0,sRa=0;
@@ -527,20 +535,20 @@ function renderVpmDetailTable(rows){
     sEv+=r.ev; sRv+=r.rv; sEp+=r.ep; sRp+=r.rp; sEa+=r.ea; sRa+=r.ra;
     html += '<tr>' +
       '<td class="left">'+r.calibre+'</td>' +
-      '<td class="kgcell">'+fmt(r.ev)+'</td><td class="kgcell">'+fmt(r.rv)+'</td><td>'+desfaseBadge(r.ev,r.rv)+'</td>' +
-      '<td class="kgcell">'+fmt(r.ep)+'</td><td class="kgcell">'+fmt(r.rp)+'</td><td>'+desfaseBadge(r.ep,r.rp)+'</td>' +
-      '<td class="kgcell">'+fmt(r.ea)+'</td><td class="kgcell">'+fmt(r.ra)+'</td><td>'+desfaseBadge(r.ea,r.ra)+'</td>' +
-      '<td class="kgcell">'+fmt(te)+'</td><td class="kgcell">'+fmt(tr)+'</td><td>'+desfaseBadge(te,tr)+'</td>' +
+      '<td class="kgcell">'+fmt(r.ev)+'</td><td class="kgcell">'+fmt(r.rv)+'</td><td>'+desfaseKgBadge(r.ev,r.rv)+'</td><td>'+desfaseBadge(r.ev,r.rv)+'</td>' +
+      '<td class="kgcell">'+fmt(r.ep)+'</td><td class="kgcell">'+fmt(r.rp)+'</td><td>'+desfaseKgBadge(r.ep,r.rp)+'</td><td>'+desfaseBadge(r.ep,r.rp)+'</td>' +
+      '<td class="kgcell">'+fmt(r.ea)+'</td><td class="kgcell">'+fmt(r.ra)+'</td><td>'+desfaseKgBadge(r.ea,r.ra)+'</td><td>'+desfaseBadge(r.ea,r.ra)+'</td>' +
+      '<td class="kgcell">'+fmt(te)+'</td><td class="kgcell">'+fmt(tr)+'</td><td>'+desfaseKgBadge(te,tr)+'</td><td>'+desfaseBadge(te,tr)+'</td>' +
       '</tr>';
   });
 
   const sTe = sEv+sEp+sEa, sTr = sRv+sRp+sRa;
   html += '</tbody><tfoot><tr>' +
     '<td class="left">Total general</td>' +
-    '<td class="kgcell">'+fmt(sEv)+'</td><td class="kgcell">'+fmt(sRv)+'</td><td>'+desfaseBadge(sEv,sRv)+'</td>' +
-    '<td class="kgcell">'+fmt(sEp)+'</td><td class="kgcell">'+fmt(sRp)+'</td><td>'+desfaseBadge(sEp,sRp)+'</td>' +
-    '<td class="kgcell">'+fmt(sEa)+'</td><td class="kgcell">'+fmt(sRa)+'</td><td>'+desfaseBadge(sEa,sRa)+'</td>' +
-    '<td class="kgcell">'+fmt(sTe)+'</td><td class="kgcell">'+fmt(sTr)+'</td><td>'+desfaseBadge(sTe,sTr)+'</td>' +
+    '<td class="kgcell">'+fmt(sEv)+'</td><td class="kgcell">'+fmt(sRv)+'</td><td>'+desfaseKgBadge(sEv,sRv)+'</td><td>'+desfaseBadge(sEv,sRv)+'</td>' +
+    '<td class="kgcell">'+fmt(sEp)+'</td><td class="kgcell">'+fmt(sRp)+'</td><td>'+desfaseKgBadge(sEp,sRp)+'</td><td>'+desfaseBadge(sEp,sRp)+'</td>' +
+    '<td class="kgcell">'+fmt(sEa)+'</td><td class="kgcell">'+fmt(sRa)+'</td><td>'+desfaseKgBadge(sEa,sRa)+'</td><td>'+desfaseBadge(sEa,sRa)+'</td>' +
+    '<td class="kgcell">'+fmt(sTe)+'</td><td class="kgcell">'+fmt(sTr)+'</td><td>'+desfaseKgBadge(sTe,sTr)+'</td><td>'+desfaseBadge(sTe,sTr)+'</td>' +
     '</tr></tfoot>';
   tbl.innerHTML = html;
 }
