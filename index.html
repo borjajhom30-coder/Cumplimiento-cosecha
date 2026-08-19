@@ -161,6 +161,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
 </style>
 </head>
 <body>
+<script>window.__EMBEDDED_SHEET_ID__ = "1AKx025QMNxTeuD9sSyKZH8seCmwhGDa4QT3cvVTvPm0";</script>
 <div class="app">
 
   <div class="topbar">
@@ -208,15 +209,6 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
   <!-- ============ TAB VPM ============ -->
   <div id="tab-vpm">
 
-    <div class="panel" id="vpmCapturePanel">
-      <h2>Captura por calibre y color — <span id="vpmTipoLabel"></span></h2>
-      <div class="table-scroll"><table class="entry" id="vpmTable"></table></div>
-      <div style="margin-top:16px;display:flex;gap:10px;">
-        <button class="btn btn-primary" onclick="saveVpm()">Guardar y generar resumen</button>
-        <button class="btn" onclick="clearVpmForm()">Limpiar</button>
-      </div>
-    </div>
-
     <div class="panel" id="vpmSummaryPanel" style="display:none;">
       <h2>Resumen de cumplimiento de cosecha — <span id="vpmSummaryTipoLabel"></span></h2>
 
@@ -232,31 +224,10 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Historial de capturas VPM</h2>
-      <div class="table-scroll"><table class="hist-table" id="vpmHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>Total estimado</th><th>Total real</th><th>Cumplimiento</th></tr></thead><tbody></tbody></table></div>
-    </div>
-
   </div>
 
   <!-- ============ TAB CUMPLIMIENTO ============ -->
   <div id="tab-cumpl" style="display:none;">
-
-    <div class="panel" id="cumplCapturePanel">
-      <h2>Captura de porcentajes — <span id="cumplTipoLabel"></span></h2>
-
-      <h3>Cumplimiento de calibre</h3>
-      <div class="table-scroll"><table class="entry" id="cumplCalibreTable"></table></div>
-
-      <h3 style="margin-top:20px;">Cumplimiento de color</h3>
-      <div class="table-scroll"><table class="entry" id="cumplColorTable"></table></div>
-      <p class="mcal-note">M.Cal: meta de color entregada aparte (no se calcula, se digita).</p>
-
-      <div style="margin-top:14px;display:flex;gap:10px;">
-        <button class="btn btn-primary" onclick="saveCumpl()">Guardar y generar presentación</button>
-        <button class="btn" onclick="clearCumplForm()">Limpiar</button>
-      </div>
-    </div>
 
     <div class="panel" id="cumplSummaryPanel" style="display:none;">
       <h2>Presentación ejecutiva — <span id="cumplSummaryTipoLabel"></span></h2>
@@ -278,11 +249,6 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       <div class="chart-wrap" style="height:240px;">
         <canvas id="cumplColorChart" role="img" aria-label="Comparación de porcentaje proyectado y real por color">Gráfico de barras comparando cumplimiento proyectado y real por color.</canvas>
       </div>
-    </div>
-
-    <div class="panel">
-      <h2>Historial de cumplimiento</h2>
-      <div class="table-scroll"><table class="hist-table" id="cumplHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>% Calibre cumplido</th><th>% Color cumplido</th></tr></thead><tbody></tbody></table></div>
     </div>
 
   </div>
@@ -466,22 +432,14 @@ function onContextChange(){
 
   buildTipoChips();
   buildViewModeChips();
-  const captureVisible = state.viewMode==='dia' ? '' : 'none';
-  document.getElementById('vpmCapturePanel').style.display = captureVisible;
-  document.getElementById('cumplCapturePanel').style.display = captureVisible;
 
   const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
-  document.getElementById('vpmTipoLabel').textContent = tipoLabel;
-  document.getElementById('cumplTipoLabel').textContent = tipoLabel;
 
   let periodLabel = tipoLabel;
   if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
   else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
   document.getElementById('vpmSummaryTipoLabel').textContent = periodLabel;
   document.getElementById('cumplSummaryTipoLabel').textContent = periodLabel;
-
-  renderVpmTable();
-  renderCumplTables();
 
   if(state.viewMode==='dia'){
     loadCurrentVpm();
@@ -497,14 +455,10 @@ async function loadPeriodView(){
   if(daysWithData===0){
     document.getElementById('vpmSummaryPanel').style.display = 'none';
     document.getElementById('cumplSummaryPanel').style.display = 'none';
-    refreshVpmHistory();
-    refreshCumplHistory();
     return;
   }
   renderVpmSummary(rows);
   renderCumplSummary(computeCumplFromRows(rows));
-  refreshVpmHistory();
-  refreshCumplHistory();
 }
 
 /* ---------------- VPM TAB ---------------- */
@@ -515,138 +469,17 @@ function diffBadge(diff){
   return '<span class="'+cls+'" style="font-weight:700;">'+sign+fmt(diff)+'</span>';
 }
 
-function renderVpmTable(){
-  const calibres = CALIBRE_SETS[state.tipo];
-  const tbl = document.getElementById('vpmTable');
-  let html = '<thead><tr><th class="left">Calibre</th>' +
-    '<th class="col-verde">Est. verde</th><th class="col-verde">Real verde</th><th class="col-verde">Dif. verde</th>' +
-    '<th class="col-pintona">Est. pintón</th><th class="col-pintona">Real pintón</th><th class="col-pintona">Dif. pintón</th>' +
-    '<th class="col-alto">Est. alto</th><th class="col-alto">Real alto</th><th class="col-alto">Dif. alto</th>' +
-    '<th>Total est.</th><th>Total real</th><th>Dif. total</th></tr></thead><tbody>';
-  calibres.forEach((c,i)=>{
-    html += '<tr>' +
-      '<td class="left">'+c+'</td>' +
-      '<td><input type="number" min="0" value="0" id="vpm_ev_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td><input type="number" min="0" value="0" id="vpm_rv_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td id="vpm_dv_'+i+'">0</td>' +
-      '<td><input type="number" min="0" value="0" id="vpm_ep_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td><input type="number" min="0" value="0" id="vpm_rp_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td id="vpm_dp_'+i+'">0</td>' +
-      '<td><input type="number" min="0" value="0" id="vpm_ea_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td><input type="number" min="0" value="0" id="vpm_ra_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td id="vpm_da_'+i+'">0</td>' +
-      '<td id="vpm_te_'+i+'">0</td><td id="vpm_tr_'+i+'">0</td><td id="vpm_dt_'+i+'">0</td>' +
-      '</tr>';
-  });
-  html += '</tbody><tfoot><tr><td class="left">Total general</td>' +
-    '<td id="vpm_sum_ev">0</td><td id="vpm_sum_rv">0</td><td id="vpm_sum_dv">0</td>' +
-    '<td id="vpm_sum_ep">0</td><td id="vpm_sum_rp">0</td><td id="vpm_sum_dp">0</td>' +
-    '<td id="vpm_sum_ea">0</td><td id="vpm_sum_ra">0</td><td id="vpm_sum_da">0</td>' +
-    '<td id="vpm_sum_te">0</td><td id="vpm_sum_tr">0</td><td id="vpm_sum_dt">0</td></tr></tfoot>';
-  tbl.innerHTML = html;
-}
-
-function recalcVpmRow(i){
-  const ev = Number(document.getElementById('vpm_ev_'+i).value)||0;
-  const rv = Number(document.getElementById('vpm_rv_'+i).value)||0;
-  const ep = Number(document.getElementById('vpm_ep_'+i).value)||0;
-  const rp = Number(document.getElementById('vpm_rp_'+i).value)||0;
-  const ea = Number(document.getElementById('vpm_ea_'+i).value)||0;
-  const ra = Number(document.getElementById('vpm_ra_'+i).value)||0;
-  document.getElementById('vpm_te_'+i).textContent = fmt(ev+ep+ea);
-  document.getElementById('vpm_tr_'+i).textContent = fmt(rv+rp+ra);
-  document.getElementById('vpm_dv_'+i).innerHTML = diffBadge(rv-ev);
-  document.getElementById('vpm_dp_'+i).innerHTML = diffBadge(rp-ep);
-  document.getElementById('vpm_da_'+i).innerHTML = diffBadge(ra-ea);
-  document.getElementById('vpm_dt_'+i).innerHTML = diffBadge((rv+rp+ra)-(ev+ep+ea));
-  recalcVpmTotals();
-}
-
-function readVpmRows(){
-  const calibres = CALIBRE_SETS[state.tipo];
-  return calibres.map((c,i)=>({
-    calibre: c,
-    ev: Number(document.getElementById('vpm_ev_'+i).value)||0,
-    rv: Number(document.getElementById('vpm_rv_'+i).value)||0,
-    ep: Number(document.getElementById('vpm_ep_'+i).value)||0,
-    rp: Number(document.getElementById('vpm_rp_'+i).value)||0,
-    ea: Number(document.getElementById('vpm_ea_'+i).value)||0,
-    ra: Number(document.getElementById('vpm_ra_'+i).value)||0
-  }));
-}
-
-function recalcVpmTotals(){
-  const rows = readVpmRows();
-  let sEv=0,sRv=0,sEp=0,sRp=0,sEa=0,sRa=0;
-  rows.forEach(r=>{ sEv+=r.ev; sRv+=r.rv; sEp+=r.ep; sRp+=r.rp; sEa+=r.ea; sRa+=r.ra; });
-  document.getElementById('vpm_sum_ev').textContent = fmt(sEv);
-  document.getElementById('vpm_sum_rv').textContent = fmt(sRv);
-  document.getElementById('vpm_sum_ep').textContent = fmt(sEp);
-  document.getElementById('vpm_sum_rp').textContent = fmt(sRp);
-  document.getElementById('vpm_sum_ea').textContent = fmt(sEa);
-  document.getElementById('vpm_sum_ra').textContent = fmt(sRa);
-  document.getElementById('vpm_sum_te').textContent = fmt(sEv+sEp+sEa);
-  document.getElementById('vpm_sum_tr').textContent = fmt(sRv+sRp+sRa);
-  document.getElementById('vpm_sum_dv').innerHTML = diffBadge(sRv-sEv);
-  document.getElementById('vpm_sum_dp').innerHTML = diffBadge(sRp-sEp);
-  document.getElementById('vpm_sum_da').innerHTML = diffBadge(sRa-sEa);
-  document.getElementById('vpm_sum_dt').innerHTML = diffBadge((sRv+sRp+sRa)-(sEv+sEp+sEa));
-}
-
-function fillVpmForm(rows){
-  rows.forEach((r,i)=>{
-    document.getElementById('vpm_ev_'+i).value = r.ev;
-    document.getElementById('vpm_rv_'+i).value = r.rv;
-    document.getElementById('vpm_ep_'+i).value = r.ep;
-    document.getElementById('vpm_rp_'+i).value = r.rp;
-    document.getElementById('vpm_ea_'+i).value = r.ea;
-    document.getElementById('vpm_ra_'+i).value = r.ra;
-    recalcVpmRow(i);
-  });
-}
-
-function clearVpmForm(){
-  const calibres = CALIBRE_SETS[state.tipo];
-  calibres.forEach((c,i)=>{
-    ['ev','rv','ep','rp','ea','ra'].forEach(k=>{ document.getElementById('vpm_'+k+'_'+i).value = 0; });
-    recalcVpmRow(i);
-  });
-}
-
-function vpmKey(fecha, tipo){ return 'vpm:'+fecha+':'+tipo; }
-
 async function getEffectiveVpmRows(fecha, tipo){
-  try{
-    const res = await window.storage.get(vpmKey(fecha, tipo));
-    const data = res ? JSON.parse(res.value) : null;
-    if(data && data.rows) return data.rows;
-  }catch(e){ /* no hay captura manual guardada */ }
   if(importedVpm[fecha] && importedVpm[fecha][tipo]) return importedVpm[fecha][tipo];
   return null;
 }
 
 async function loadCurrentVpm(){
   const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
-
   if(rows){
-    fillVpmForm(rows);
     renderVpmSummary(rows);
   } else {
-    clearVpmForm();
     document.getElementById('vpmSummaryPanel').style.display = 'none';
-  }
-  refreshVpmHistory();
-}
-
-async function saveVpm(){
-  const rows = readVpmRows();
-  try{
-    await window.storage.set(vpmKey(state.fecha, state.tipo), JSON.stringify({rows}));
-    setStatus('Guardado');
-    renderVpmSummary(rows);
-    refreshVpmHistory();
-  }catch(e){
-    setStatus('No se pudo guardar');
   }
 }
 
@@ -847,156 +680,7 @@ function renderVpmColorChart(colorTotals){
   });
 }
 
-function handleCsvUpload(evt){
-  const file = evt.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    try{
-      const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim().length>0);
-      const calibres = CALIBRE_SETS[state.tipo];
-      const map = {};
-      lines.slice(1).forEach(line=>{
-        const parts = line.split(',').map(s=>s.trim());
-        if(parts.length<7) return;
-        map[parts[0]] = parts;
-      });
-      calibres.forEach((c,i)=>{
-        const p = map[c];
-        if(!p) return;
-        document.getElementById('vpm_ev_'+i).value = Number(p[1])||0;
-        document.getElementById('vpm_rv_'+i).value = Number(p[2])||0;
-        document.getElementById('vpm_ep_'+i).value = Number(p[3])||0;
-        document.getElementById('vpm_rp_'+i).value = Number(p[4])||0;
-        document.getElementById('vpm_ea_'+i).value = Number(p[5])||0;
-        document.getElementById('vpm_ra_'+i).value = Number(p[6])||0;
-        recalcVpmRow(i);
-      });
-      setStatus('CSV cargado');
-    }catch(err){
-      setStatus('CSV inválido');
-    }
-    evt.target.value = '';
-  };
-  reader.readAsText(file);
-}
-
-async function refreshVpmHistory(){
-  const tbody = document.querySelector('#vpmHistTable tbody');
-  tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Cargando…</td></tr>';
-  try{
-    const res = await window.storage.list('vpm:');
-    const keys = (res && res.keys) ? res.keys : [];
-    const entries = keys.map(k=>{
-      const parts = k.split(':');
-      return {key:k, fecha:parts[1], tipo:parts[2]};
-    }).sort((a,b)=> b.fecha.localeCompare(a.fecha)).slice(0,25);
-    if(entries.length===0){
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
-      return;
-    }
-    const rowsHtml = [];
-    for(const en of entries){
-      try{
-        const r = await window.storage.get(en.key);
-        const data = JSON.parse(r.value);
-        const m = computeVpmMetrics(data.rows);
-        const pct = m.grandEst>0 ? m.grandReal/m.grandEst : 0;
-        rowsHtml.push('<tr onclick="loadHistoryRow(\''+en.fecha+'\',\''+en.tipo+'\')">' +
-          '<td>'+en.fecha+'</td><td><span class="tag '+en.tipo+'">'+tipoLabelShort(en.tipo)+'</span></td>' +
-          '<td>'+fmt(m.grandEst)+' kg</td><td>'+fmt(m.grandReal)+' kg</td><td>'+fmtPct(pct)+'</td></tr>');
-      }catch(e){}
-    }
-    tbody.innerHTML = rowsHtml.join('');
-  }catch(e){
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
-  }
-}
-
-function tipoLabelShort(key){
-  const t = TIPOS.find(t=>t.key===key);
-  return t ? t.label : key;
-}
-
-function loadHistoryRow(fecha, tipo){
-  document.getElementById('fechaInput').value = fecha;
-  state.fecha = fecha;
-  state.tipo = tipo;
-  onContextChange();
-  switchTab('vpm');
-}
-
 /* ---------------- CUMPLIMIENTO TAB ---------------- */
-
-function renderCumplTables(){
-  const calibres = CALIBRE_SETS[state.tipo];
-  const calTbl = document.getElementById('cumplCalibreTable');
-  let html = '<thead><tr><th class="left">Calibre</th><th>Proyectado %</th><th>Real %</th></tr></thead><tbody>';
-  calibres.forEach((c,i)=>{
-    html += '<tr><td class="left">'+c+'</td>' +
-      '<td><input type="number" step="0.1" min="0" value="0" id="cc_proy_'+i+'"></td>' +
-      '<td><input type="number" step="0.1" min="0" value="0" id="cc_real_'+i+'"></td></tr>';
-  });
-  html += '</tbody>';
-  calTbl.innerHTML = html;
-
-  const colorTbl = document.getElementById('cumplColorTable');
-  let html2 = '<thead><tr><th class="left">Color</th><th>Proyectado %</th><th>Real %</th><th>M.Cal %</th></tr></thead><tbody>';
-  COLOR_KEYS.forEach(ck=>{
-    html2 += '<tr><td class="left">'+ck.label+'</td>' +
-      '<td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_'+ck.key+'"></td>' +
-      '<td><input type="number" step="0.1" min="0" value="0" id="cclr_real_'+ck.key+'"></td>' +
-      '<td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_'+ck.key+'"></td></tr>';
-  });
-  html2 += '</tbody>';
-  colorTbl.innerHTML = html2;
-}
-
-function readCumplData(){
-  const calibres = CALIBRE_SETS[state.tipo];
-  const calibre = calibres.map((c,i)=>({
-    calibre: c,
-    proy: Number(document.getElementById('cc_proy_'+i).value)||0,
-    real: Number(document.getElementById('cc_real_'+i).value)||0
-  }));
-  const color = {};
-  COLOR_KEYS.forEach(ck=>{
-    color[ck.key] = {
-      proy: Number(document.getElementById('cclr_proy_'+ck.key).value)||0,
-      real: Number(document.getElementById('cclr_real_'+ck.key).value)||0,
-      mcal: Number(document.getElementById('cclr_mcal_'+ck.key).value)||0
-    };
-  });
-  return {calibre, color};
-}
-
-function fillCumplForm(data){
-  data.calibre.forEach((r,i)=>{
-    document.getElementById('cc_proy_'+i).value = r.proy;
-    document.getElementById('cc_real_'+i).value = r.real;
-  });
-  COLOR_KEYS.forEach(ck=>{
-    const c = data.color[ck.key] || {proy:0,real:0,mcal:0};
-    document.getElementById('cclr_proy_'+ck.key).value = c.proy;
-    document.getElementById('cclr_real_'+ck.key).value = c.real;
-    document.getElementById('cclr_mcal_'+ck.key).value = c.mcal;
-  });
-}
-
-function clearCumplForm(){
-  const calibres = CALIBRE_SETS[state.tipo];
-  calibres.forEach((c,i)=>{
-    document.getElementById('cc_proy_'+i).value = 0;
-    document.getElementById('cc_real_'+i).value = 0;
-  });
-  COLOR_KEYS.forEach(ck=>{
-    document.getElementById('cclr_proy_'+ck.key).value = 0;
-    document.getElementById('cclr_real_'+ck.key).value = 0;
-    document.getElementById('cclr_mcal_'+ck.key).value = 0;
-  });
-}
-
-function cumplKey(fecha, tipo){ return 'cumpl:'+fecha+':'+tipo; }
 
 function computeCumplFromRows(rows){
   const grandEst = rows.reduce((a,r)=>a+r.ev+r.ep+r.ea,0);
@@ -1028,37 +712,11 @@ function computeCumplFromRows(rows){
 }
 
 async function loadCurrentCumpl(){
-  let data = null;
-  try{
-    const res = await window.storage.get(cumplKey(state.fecha, state.tipo));
-    const stored = res ? JSON.parse(res.value) : null;
-    if(stored) data = stored;
-  }catch(e){ /* no hay captura manual guardada */ }
-
-  if(!data){
-    const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
-    if(rows) data = computeCumplFromRows(rows);
-  }
-
-  if(data){
-    fillCumplForm(data);
-    renderCumplSummary(data);
+  const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
+  if(rows){
+    renderCumplSummary(computeCumplFromRows(rows));
   } else {
-    clearCumplForm();
     document.getElementById('cumplSummaryPanel').style.display = 'none';
-  }
-  refreshCumplHistory();
-}
-
-async function saveCumpl(){
-  const data = readCumplData();
-  try{
-    await window.storage.set(cumplKey(state.fecha, state.tipo), JSON.stringify(data));
-    setStatus('Guardado');
-    renderCumplSummary(data);
-    refreshCumplHistory();
-  }catch(e){
-    setStatus('No se pudo guardar');
   }
 }
 
@@ -1119,49 +777,6 @@ function renderCumplSummary(data){
     },
     plugins: [ratioLabelPlugin(colorRatios, false)]
   });
-}
-
-async function refreshCumplHistory(){
-  const tbody = document.querySelector('#cumplHistTable tbody');
-  tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-mute);">Cargando…</td></tr>';
-  try{
-    const res = await window.storage.list('cumpl:');
-    const keys = (res && res.keys) ? res.keys : [];
-    const entries = keys.map(k=>{
-      const parts = k.split(':');
-      return {key:k, fecha:parts[1], tipo:parts[2]};
-    }).sort((a,b)=> b.fecha.localeCompare(a.fecha)).slice(0,25);
-    if(entries.length===0){
-      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
-      return;
-    }
-    const rowsHtml = [];
-    for(const en of entries){
-      try{
-        const r = await window.storage.get(en.key);
-        const data = JSON.parse(r.value);
-        const avgCal = data.calibre.reduce((a,c)=>a+(c.proy>0?c.real/c.proy:0),0)/data.calibre.length;
-        const avgColor = COLOR_KEYS.reduce((a,ck)=>{
-          const c = data.color[ck.key];
-          return a + (c.proy>0? c.real/c.proy : 0);
-        },0)/COLOR_KEYS.length;
-        rowsHtml.push('<tr onclick="loadHistoryRowCumpl(\''+en.fecha+'\',\''+en.tipo+'\')">' +
-          '<td>'+en.fecha+'</td><td><span class="tag '+en.tipo+'">'+tipoLabelShort(en.tipo)+'</span></td>' +
-          '<td>'+fmtPct(avgCal)+'</td><td>'+fmtPct(avgColor)+'</td></tr>');
-      }catch(e){}
-    }
-    tbody.innerHTML = rowsHtml.join('');
-  }catch(e){
-    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-mute);">Sin capturas todavía.</td></tr>';
-  }
-}
-
-function loadHistoryRowCumpl(fecha, tipo){
-  document.getElementById('fechaInput').value = fecha;
-  state.fecha = fecha;
-  state.tipo = tipo;
-  onContextChange();
-  switchTab('cumpl');
 }
 
 function normalizeCalibreKey(k){
