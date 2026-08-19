@@ -209,6 +209,11 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
   <!-- ============ TAB VPM ============ -->
   <div id="tab-vpm">
 
+    <div class="panel" id="vpmNoDataMsg" style="display:none;text-align:center;padding:34px 20px;">
+      <div style="font-size:28px;">🍍</div>
+      <div style="font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-top:8px;" id="vpmNoDataText"></div>
+    </div>
+
     <div class="panel" id="vpmSummaryPanel" style="display:none;">
       <h2>Resumen de cumplimiento de cosecha — <span id="vpmSummaryTipoLabel"></span></h2>
 
@@ -228,6 +233,11 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
 
   <!-- ============ TAB CUMPLIMIENTO ============ -->
   <div id="tab-cumpl" style="display:none;">
+
+    <div class="panel" id="cumplNoDataMsg" style="display:none;text-align:center;padding:34px 20px;">
+      <div style="font-size:28px;">🍍</div>
+      <div style="font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-top:8px;" id="cumplNoDataText"></div>
+    </div>
 
     <div class="panel" id="cumplSummaryPanel" style="display:none;">
       <h2>Presentación ejecutiva — <span id="cumplSummaryTipoLabel"></span></h2>
@@ -449,14 +459,34 @@ function onContextChange(){
   }
 }
 
+function periodDescriptionForMsg(){
+  if(state.viewMode==='semana') return 'la semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0];
+  if(state.viewMode==='mes') return 'el mes de ' + state.mes;
+  const d = new Date(state.fecha+'T00:00:00');
+  return 'el ' + d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
+}
+
+function showNoDataMessage(show){
+  const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
+  const msg = 'En ' + periodDescriptionForMsg() + ' no hubo proceso de ' + tipoLabel + '.';
+  const vpmMsg = document.getElementById('vpmNoDataMsg');
+  const cumplMsg = document.getElementById('cumplNoDataMsg');
+  document.getElementById('vpmNoDataText').textContent = msg;
+  document.getElementById('cumplNoDataText').textContent = msg;
+  vpmMsg.style.display = show ? '' : 'none';
+  cumplMsg.style.display = show ? '' : 'none';
+  document.getElementById('vpmSummaryPanel').style.display = show ? 'none' : '';
+  document.getElementById('cumplSummaryPanel').style.display = show ? 'none' : '';
+}
+
 async function loadPeriodView(){
   const dateList = state.viewMode==='semana' ? datesInWeek(state.semana) : datesInMonth(state.mes);
   const {rows, daysWithData} = await getAggregatedRows(state.tipo, dateList);
   if(daysWithData===0){
-    document.getElementById('vpmSummaryPanel').style.display = 'none';
-    document.getElementById('cumplSummaryPanel').style.display = 'none';
+    showNoDataMessage(true);
     return;
   }
+  showNoDataMessage(false);
   renderVpmSummary(rows);
   renderCumplSummary(computeCumplFromRows(rows));
 }
@@ -477,9 +507,10 @@ async function getEffectiveVpmRows(fecha, tipo){
 async function loadCurrentVpm(){
   const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
   if(rows){
+    showNoDataMessage(false);
     renderVpmSummary(rows);
   } else {
-    document.getElementById('vpmSummaryPanel').style.display = 'none';
+    showNoDataMessage(true);
   }
 }
 
@@ -723,8 +754,6 @@ async function loadCurrentCumpl(){
   const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
   if(rows){
     renderCumplSummary(computeCumplFromRows(rows));
-  } else {
-    document.getElementById('cumplSummaryPanel').style.display = 'none';
   }
 }
 
