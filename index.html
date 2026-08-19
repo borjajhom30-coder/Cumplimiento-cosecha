@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="es"><head>
+<html lang="es">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cumplimiento de cosecha</title>
@@ -160,8 +161,6 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
 </style>
 </head>
 <body>
-<script>window.__EMBEDDED_SHEET_ID__ = "1AKx025QMNxTeuD9sSyKZH8seCmwhGDa4QT3cvVTvPm0";</script>
-
 <div class="app">
 
   <div class="topbar">
@@ -178,30 +177,10 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
     </div>
   </div>
 
-  <div class="panel" id="liveSheetPanel" style="padding:12px 18px;">
-    <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleLiveSheetPanel()">
-      <span id="liveSheetDot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--verde-deep); display: inline-block;"></span>
-      <span style="font-size:12.5px;color:var(--ink-mute);" id="liveSheetStatus">Conectado. Última actualización: 4:59:45 p. m.</span>
-      <span class="spacer"></span>
-      <span style="font-size:12px;color:var(--ink-mute);">⚙ Configurar conexión</span>
-    </div>
-    <div id="liveSheetBody" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
-      <div class="upload-row" style="margin-top:0;">
-        <input type="text" id="sheetIdInput" placeholder="Pega aquí el enlace o el ID de la Google Sheet" style="min-width:260px;">
-        <button class="btn btn-primary" onclick="connectLiveSheet()">Conectar</button>
-        <button class="btn btn-ghost" onclick="disconnectLiveSheet()">Desconectar</button>
-      </div>
-      <div id="exportSheetRow" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
-        <button class="btn btn-primary" onclick="exportWithEmbeddedSheet()">Descargar copia con esta conexión incluida</button>
-        <div style="font-size:12px;color:var(--ink-mute);margin-top:8px;">Genera un archivo .html que ya trae esta conexión puesta. Súbelo a GitHub Pages (o compártelo directo) y cualquiera que lo abra verá los datos en vivo, sin pegar el enlace.</div>
-      </div>
-    </div>
-  </div>
-
   <div class="controls">
     <div class="field">
       <label>Vista</label>
-      <div class="chip-row" id="viewModeChips"><div class="chip active">Día</div><div class="chip">Semana</div><div class="chip">Mes</div></div>
+      <div class="chip-row" id="viewModeChips"></div>
     </div>
     <div class="field" id="fechaField">
       <label>Fecha</label>
@@ -217,7 +196,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
     </div>
     <div class="field">
       <label>Tipo de fruta</label>
-      <div class="chip-row" id="tipoChips"><div class="chip active">Inducción (Normal)</div><div class="chip">Adelantada</div><div class="chip">Exportación</div></div>
+      <div class="chip-row" id="tipoChips"></div>
     </div>
     <div class="spacer"></div>
     <div class="field">
@@ -230,32 +209,32 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
   <div id="tab-vpm">
 
     <div class="panel" id="vpmCapturePanel">
-      <h2>Captura por calibre y color — <span id="vpmTipoLabel">Inducción (Normal)</span></h2>
-      <div class="table-scroll"><table class="entry" id="vpmTable"><thead><tr><th class="left">Calibre</th><th class="col-verde">Est. verde</th><th class="col-verde">Real verde</th><th class="col-pintona">Est. pintón</th><th class="col-pintona">Real pintón</th><th class="col-alto">Est. alto</th><th class="col-alto">Real alto</th><th>Total est.</th><th>Total real</th></tr></thead><tbody><tr><td class="left">Primera</td><td><input type="number" min="0" value="0" id="vpm_ev_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_rv_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_ep_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_rp_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_ea_0" oninput="recalcVpmRow(0)"></td><td><input type="number" min="0" value="0" id="vpm_ra_0" oninput="recalcVpmRow(0)"></td><td id="vpm_te_0">10.665</td><td id="vpm_tr_0">0</td></tr><tr><td class="left">Segunda</td><td><input type="number" min="0" value="0" id="vpm_ev_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_rv_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_ep_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_rp_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_ea_1" oninput="recalcVpmRow(1)"></td><td><input type="number" min="0" value="0" id="vpm_ra_1" oninput="recalcVpmRow(1)"></td><td id="vpm_te_1">9.617</td><td id="vpm_tr_1">0</td></tr><tr><td class="left">Tercera</td><td><input type="number" min="0" value="0" id="vpm_ev_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_rv_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_ep_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_rp_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_ea_2" oninput="recalcVpmRow(2)"></td><td><input type="number" min="0" value="0" id="vpm_ra_2" oninput="recalcVpmRow(2)"></td><td id="vpm_te_2">7.500</td><td id="vpm_tr_2">0</td></tr><tr><td class="left">Guapita</td><td><input type="number" min="0" value="0" id="vpm_ev_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_rv_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_ep_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_rp_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_ea_3" oninput="recalcVpmRow(3)"></td><td><input type="number" min="0" value="0" id="vpm_ra_3" oninput="recalcVpmRow(3)"></td><td id="vpm_te_3">9.000</td><td id="vpm_tr_3">0</td></tr><tr><td class="left">Baby</td><td><input type="number" min="0" value="0" id="vpm_ev_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_rv_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_ep_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_rp_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_ea_4" oninput="recalcVpmRow(4)"></td><td><input type="number" min="0" value="0" id="vpm_ra_4" oninput="recalcVpmRow(4)"></td><td id="vpm_te_4">5.000</td><td id="vpm_tr_4">0</td></tr><tr><td class="left">Industria</td><td><input type="number" min="0" value="0" id="vpm_ev_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_rv_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_ep_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_rp_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_ea_5" oninput="recalcVpmRow(5)"></td><td><input type="number" min="0" value="0" id="vpm_ra_5" oninput="recalcVpmRow(5)"></td><td id="vpm_te_5">2.017</td><td id="vpm_tr_5">0</td></tr><tr><td class="left">Jugos</td><td><input type="number" min="0" value="0" id="vpm_ev_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_rv_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_ep_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_rp_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_ea_6" oninput="recalcVpmRow(6)"></td><td><input type="number" min="0" value="0" id="vpm_ra_6" oninput="recalcVpmRow(6)"></td><td id="vpm_te_6">3.700</td><td id="vpm_tr_6">0</td></tr></tbody><tfoot><tr><td class="left">Total general</td><td id="vpm_sum_ev">13.680</td><td id="vpm_sum_rv">0</td><td id="vpm_sum_ep">24.396</td><td id="vpm_sum_rp">0</td><td id="vpm_sum_ea">9.423</td><td id="vpm_sum_ra">0</td><td id="vpm_sum_te">47.499</td><td id="vpm_sum_tr">0</td></tr></tfoot></table></div>
+      <h2>Captura por calibre y color — <span id="vpmTipoLabel"></span></h2>
+      <div class="table-scroll"><table class="entry" id="vpmTable"></table></div>
       <div style="margin-top:16px;display:flex;gap:10px;">
         <button class="btn btn-primary" onclick="saveVpm()">Guardar y generar resumen</button>
         <button class="btn" onclick="clearVpmForm()">Limpiar</button>
       </div>
     </div>
 
-    <div class="panel" id="vpmSummaryPanel" style="">
-      <h2>Resumen de cumplimiento de cosecha — <span id="vpmSummaryTipoLabel">Inducción (Normal)</span></h2>
+    <div class="panel" id="vpmSummaryPanel" style="display:none;">
+      <h2>Resumen de cumplimiento de cosecha — <span id="vpmSummaryTipoLabel"></span></h2>
 
-      <div class="kpi-row" id="vpmKpiRow"><div class="kpi"><div class="lbl">Total estimado</div><div class="val">47.499 kg</div></div><div class="kpi"><div class="lbl">Total real</div><div class="val">0 kg</div></div><div class="kpi"><div class="lbl">Cumplimiento global</div><div class="val">0.0%</div><div class="sub down">-47.499 kg vs estimado</div></div></div>
+      <div class="kpi-row" id="vpmKpiRow"></div>
 
       <h3>Diferencia estimado vs real por color</h3>
-      <div class="diff-row" id="vpmDiffRow"><div class="diff-card verde"><div class="name">Verde (0.0 - 1.0)</div><div class="nums">Estimado 13.680 kg · Real 0 kg</div><div class="delta neg">-13.680 kg</div><div class="nums">0.0% cumplimiento</div></div><div class="diff-card pintona"><div class="name">Pintón (1.5 - 2.5)</div><div class="nums">Estimado 24.396 kg · Real 0 kg</div><div class="delta neg">-24.396 kg</div><div class="nums">0.0% cumplimiento</div></div><div class="diff-card alto"><div class="name">Alto (3.0 - 4.0)</div><div class="nums">Estimado 9.423 kg · Real 0 kg</div><div class="delta neg">-9.423 kg</div><div class="nums">0.0% cumplimiento</div></div></div>
+      <div class="diff-row" id="vpmDiffRow"></div>
 
       <h3>Detalle por calibre y color</h3>
       <div class="detail-legend">El % de desface se resalta en rojo cuando está fuera del rango 95%-105%.</div>
       <div class="detail-wrap">
-        <table class="detail" id="vpmDetailTable"><thead><tr><th rowspan="2" style="text-align:left;">Calibre</th><th colspan="3" class="grp-verde">Verde (0.0-1.0)</th><th colspan="3" class="grp-pintona">Pintón (1.5-2.5)</th><th colspan="3" class="grp-alto">Alto (3.0-4.0)</th><th colspan="3" class="grp-total">Total</th></tr><tr><th class="grp-verde">Est.</th><th class="grp-verde">Real</th><th class="grp-verde">Desf.</th><th class="grp-pintona">Est.</th><th class="grp-pintona">Real</th><th class="grp-pintona">Desf.</th><th class="grp-alto">Est.</th><th class="grp-alto">Real</th><th class="grp-alto">Desf.</th><th class="grp-total">Est.</th><th class="grp-total">Real</th><th class="grp-total">Desf.</th></tr></thead><tbody><tr><td class="left">Primera</td><td class="kgcell">5.325</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">3.137</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.203</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">10.665</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Segunda</td><td class="kgcell">4.605</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.992</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.020</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">9.617</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Tercera</td><td class="kgcell">3.750</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">2.250</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">1.500</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">7.500</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Guapita</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">9.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">9.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Baby</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">5.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">5.000</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Industria</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">2.017</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">2.017</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr><tr><td class="left">Jugos</td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">0</td><td class="kgcell">0</td><td><span class="desf-badge badge-ok">0%</span></td><td class="kgcell">3.700</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">3.700</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr></tbody><tfoot><tr><td class="left">Total general</td><td class="kgcell">13.680</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">24.396</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">9.423</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td><td class="kgcell">47.499</td><td class="kgcell">0</td><td><span class="desf-badge badge-bad">0%</span></td></tr></tfoot></table>
+        <table class="detail" id="vpmDetailTable"></table>
       </div>
     </div>
 
     <div class="panel">
       <h2>Historial de capturas VPM</h2>
-      <div class="table-scroll"><table class="hist-table" id="vpmHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>Total estimado</th><th>Total real</th><th>Cumplimiento</th></tr></thead><tbody><tr onclick="loadHistoryRow('2026-07-22','normal')"><td>2026-07-22</td><td><span class="tag normal">Inducción (Normal)</span></td><td>38.002 kg</td><td>34.746 kg</td><td>91.4%</td></tr><tr onclick="loadHistoryRow('2026-07-21','normal')"><td>2026-07-21</td><td><span class="tag normal">Inducción (Normal)</span></td><td>66.500 kg</td><td>72.540 kg</td><td>109.1%</td></tr></tbody></table></div>
+      <div class="table-scroll"><table class="hist-table" id="vpmHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>Total estimado</th><th>Total real</th><th>Cumplimiento</th></tr></thead><tbody></tbody></table></div>
     </div>
 
   </div>
@@ -264,13 +243,13 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
   <div id="tab-cumpl" style="display:none;">
 
     <div class="panel" id="cumplCapturePanel">
-      <h2>Captura de porcentajes — <span id="cumplTipoLabel">Inducción (Normal)</span></h2>
+      <h2>Captura de porcentajes — <span id="cumplTipoLabel"></span></h2>
 
       <h3>Cumplimiento de calibre</h3>
-      <div class="table-scroll"><table class="entry" id="cumplCalibreTable"><thead><tr><th class="left">Calibre</th><th>Proyectado %</th><th>Real %</th></tr></thead><tbody><tr><td class="left">Primera</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_0"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_0"></td></tr><tr><td class="left">Segunda</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_1"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_1"></td></tr><tr><td class="left">Tercera</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_2"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_2"></td></tr><tr><td class="left">Guapita</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_3"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_3"></td></tr><tr><td class="left">Baby</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_4"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_4"></td></tr><tr><td class="left">Industria</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_5"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_5"></td></tr><tr><td class="left">Jugos</td><td><input type="number" step="0.1" min="0" value="0" id="cc_proy_6"></td><td><input type="number" step="0.1" min="0" value="0" id="cc_real_6"></td></tr></tbody></table></div>
+      <div class="table-scroll"><table class="entry" id="cumplCalibreTable"></table></div>
 
       <h3 style="margin-top:20px;">Cumplimiento de color</h3>
-      <div class="table-scroll"><table class="entry" id="cumplColorTable"><thead><tr><th class="left">Color</th><th>Proyectado %</th><th>Real %</th><th>M.Cal %</th></tr></thead><tbody><tr><td class="left">Verde (0.0 - 1.0)</td><td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_verde"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_real_verde"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_verde"></td></tr><tr><td class="left">Pintón (1.5 - 2.5)</td><td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_pintona"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_real_pintona"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_pintona"></td></tr><tr><td class="left">Alto (3.0 - 4.0)</td><td><input type="number" step="0.1" min="0" value="0" id="cclr_proy_alto"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_real_alto"></td><td><input type="number" step="0.1" min="0" value="0" id="cclr_mcal_alto"></td></tr></tbody></table></div>
+      <div class="table-scroll"><table class="entry" id="cumplColorTable"></table></div>
       <p class="mcal-note">M.Cal: meta de color entregada aparte (no se calcula, se digita).</p>
 
       <div style="margin-top:14px;display:flex;gap:10px;">
@@ -279,8 +258,8 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       </div>
     </div>
 
-    <div class="panel" id="cumplSummaryPanel" style="">
-      <h2>Presentación ejecutiva — <span id="cumplSummaryTipoLabel">Inducción (Normal)</span></h2>
+    <div class="panel" id="cumplSummaryPanel" style="display:none;">
+      <h2>Presentación ejecutiva — <span id="cumplSummaryTipoLabel"></span></h2>
 
       <h3>Cumplimiento por calibre</h3>
       <div class="legend">
@@ -288,7 +267,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         <span><span class="dot" style="background:#eb6834"></span>Real</span>
       </div>
       <div class="chart-wrap" style="height:260px;">
-        <canvas id="cumplCalibreChart" role="img" aria-label="Comparación de porcentaje proyectado y real por calibre" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0">Gráfico de barras comparando cumplimiento proyectado y real por calibre.</canvas>
+        <canvas id="cumplCalibreChart" role="img" aria-label="Comparación de porcentaje proyectado y real por calibre">Gráfico de barras comparando cumplimiento proyectado y real por calibre.</canvas>
       </div>
 
       <h3 style="margin-top:22px;">Cumplimiento por color</h3>
@@ -297,13 +276,13 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         <span><span class="dot" style="background:#eb6834"></span>Real</span>
       </div>
       <div class="chart-wrap" style="height:240px;">
-        <canvas id="cumplColorChart" role="img" aria-label="Comparación de porcentaje proyectado y real por color" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0">Gráfico de barras comparando cumplimiento proyectado y real por color.</canvas>
+        <canvas id="cumplColorChart" role="img" aria-label="Comparación de porcentaje proyectado y real por color">Gráfico de barras comparando cumplimiento proyectado y real por color.</canvas>
       </div>
     </div>
 
     <div class="panel">
       <h2>Historial de cumplimiento</h2>
-      <div class="table-scroll"><table class="hist-table" id="cumplHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>% Calibre cumplido</th><th>% Color cumplido</th></tr></thead><tbody><tr onclick="loadHistoryRowCumpl('2026-07-21','normal')"><td>2026-07-21</td><td><span class="tag normal">Inducción (Normal)</span></td><td>99.8%</td><td>105.1%</td></tr></tbody></table></div>
+      <div class="table-scroll"><table class="hist-table" id="cumplHistTable"><thead><tr><th>Fecha</th><th>Tipo</th><th>% Calibre cumplido</th><th>% Color cumplido</th></tr></thead><tbody></tbody></table></div>
     </div>
 
   </div>
@@ -530,31 +509,40 @@ async function loadPeriodView(){
 
 /* ---------------- VPM TAB ---------------- */
 
+function diffBadge(diff){
+  const sign = diff>0 ? '+' : '';
+  const cls = diff>=0 ? 'up' : 'down';
+  return '<span class="'+cls+'" style="font-weight:700;">'+sign+fmt(diff)+'</span>';
+}
+
 function renderVpmTable(){
   const calibres = CALIBRE_SETS[state.tipo];
   const tbl = document.getElementById('vpmTable');
   let html = '<thead><tr><th class="left">Calibre</th>' +
-    '<th class="col-verde">Est. verde</th><th class="col-verde">Real verde</th>' +
-    '<th class="col-pintona">Est. pintón</th><th class="col-pintona">Real pintón</th>' +
-    '<th class="col-alto">Est. alto</th><th class="col-alto">Real alto</th>' +
-    '<th>Total est.</th><th>Total real</th></tr></thead><tbody>';
+    '<th class="col-verde">Est. verde</th><th class="col-verde">Real verde</th><th class="col-verde">Dif. verde</th>' +
+    '<th class="col-pintona">Est. pintón</th><th class="col-pintona">Real pintón</th><th class="col-pintona">Dif. pintón</th>' +
+    '<th class="col-alto">Est. alto</th><th class="col-alto">Real alto</th><th class="col-alto">Dif. alto</th>' +
+    '<th>Total est.</th><th>Total real</th><th>Dif. total</th></tr></thead><tbody>';
   calibres.forEach((c,i)=>{
     html += '<tr>' +
       '<td class="left">'+c+'</td>' +
       '<td><input type="number" min="0" value="0" id="vpm_ev_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
       '<td><input type="number" min="0" value="0" id="vpm_rv_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td id="vpm_dv_'+i+'">0</td>' +
       '<td><input type="number" min="0" value="0" id="vpm_ep_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
       '<td><input type="number" min="0" value="0" id="vpm_rp_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
+      '<td id="vpm_dp_'+i+'">0</td>' +
       '<td><input type="number" min="0" value="0" id="vpm_ea_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
       '<td><input type="number" min="0" value="0" id="vpm_ra_'+i+'" onInput="recalcVpmRow('+i+')"></td>' +
-      '<td id="vpm_te_'+i+'">0</td><td id="vpm_tr_'+i+'">0</td>' +
+      '<td id="vpm_da_'+i+'">0</td>' +
+      '<td id="vpm_te_'+i+'">0</td><td id="vpm_tr_'+i+'">0</td><td id="vpm_dt_'+i+'">0</td>' +
       '</tr>';
   });
   html += '</tbody><tfoot><tr><td class="left">Total general</td>' +
-    '<td id="vpm_sum_ev">0</td><td id="vpm_sum_rv">0</td>' +
-    '<td id="vpm_sum_ep">0</td><td id="vpm_sum_rp">0</td>' +
-    '<td id="vpm_sum_ea">0</td><td id="vpm_sum_ra">0</td>' +
-    '<td id="vpm_sum_te">0</td><td id="vpm_sum_tr">0</td></tr></tfoot>';
+    '<td id="vpm_sum_ev">0</td><td id="vpm_sum_rv">0</td><td id="vpm_sum_dv">0</td>' +
+    '<td id="vpm_sum_ep">0</td><td id="vpm_sum_rp">0</td><td id="vpm_sum_dp">0</td>' +
+    '<td id="vpm_sum_ea">0</td><td id="vpm_sum_ra">0</td><td id="vpm_sum_da">0</td>' +
+    '<td id="vpm_sum_te">0</td><td id="vpm_sum_tr">0</td><td id="vpm_sum_dt">0</td></tr></tfoot>';
   tbl.innerHTML = html;
 }
 
@@ -567,6 +555,10 @@ function recalcVpmRow(i){
   const ra = Number(document.getElementById('vpm_ra_'+i).value)||0;
   document.getElementById('vpm_te_'+i).textContent = fmt(ev+ep+ea);
   document.getElementById('vpm_tr_'+i).textContent = fmt(rv+rp+ra);
+  document.getElementById('vpm_dv_'+i).innerHTML = diffBadge(rv-ev);
+  document.getElementById('vpm_dp_'+i).innerHTML = diffBadge(rp-ep);
+  document.getElementById('vpm_da_'+i).innerHTML = diffBadge(ra-ea);
+  document.getElementById('vpm_dt_'+i).innerHTML = diffBadge((rv+rp+ra)-(ev+ep+ea));
   recalcVpmTotals();
 }
 
@@ -595,6 +587,10 @@ function recalcVpmTotals(){
   document.getElementById('vpm_sum_ra').textContent = fmt(sRa);
   document.getElementById('vpm_sum_te').textContent = fmt(sEv+sEp+sEa);
   document.getElementById('vpm_sum_tr').textContent = fmt(sRv+sRp+sRa);
+  document.getElementById('vpm_sum_dv').innerHTML = diffBadge(sRv-sEv);
+  document.getElementById('vpm_sum_dp').innerHTML = diffBadge(sRp-sEp);
+  document.getElementById('vpm_sum_da').innerHTML = diffBadge(sRa-sEa);
+  document.getElementById('vpm_sum_dt').innerHTML = diffBadge((sRv+sRp+sRa)-(sEv+sEp+sEa));
 }
 
 function fillVpmForm(rows){
@@ -1611,15 +1607,16 @@ async function refreshLiveSheet(silent){
   if(!sheetId) return;
   const statusEl = document.getElementById('liveSheetStatus');
   const dotEl = document.getElementById('liveSheetDot');
-  if(!silent) statusEl.textContent = 'Actualizando desde Google Sheets…';
+  const exportRow = document.getElementById('exportSheetRow');
+  if(statusEl && !silent) statusEl.textContent = 'Actualizando desde Google Sheets…';
   try{
     importedVpm = await fetchLiveSheetData(sheetId);
     populateImportedDatesUI('conectado en vivo a Google Sheets', '');
-    statusEl.textContent = 'Conectado. Última actualización: ' + new Date().toLocaleTimeString('es-CO');
-    document.getElementById('exportSheetRow').style.display = '';
+    if(statusEl) statusEl.textContent = 'Conectado. Última actualización: ' + new Date().toLocaleTimeString('es-CO');
+    if(exportRow) exportRow.style.display = '';
     if(dotEl) dotEl.style.background = 'var(--verde-deep)';
   }catch(err){
-    statusEl.textContent = 'Error al actualizar: ' + err.message;
+    if(statusEl) statusEl.textContent = 'Error al actualizar: ' + err.message;
     if(dotEl) dotEl.style.background = 'var(--alto-deep)';
   }
 }
@@ -1857,6 +1854,5 @@ ensureStorage().then(async ()=>{
   onContextChange();
 });
 </script>
-
-
-</body></html>
+</body>
+</html>
