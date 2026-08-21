@@ -229,6 +229,36 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       </div>
     </div>
 
+    <div class="panel">
+      <h2>Búsqueda histórica</h2>
+      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Filtra uno o varios días para ver el proyectado y real por calibre y color, en formato de datos (sin gráficas). Usa el tipo de fruta seleccionado arriba.</div>
+      <div class="upload-row" style="margin-top:0;">
+        <div class="field">
+          <label>Desde</label>
+          <input type="date" id="histDesde">
+        </div>
+        <div class="field">
+          <label>Hasta</label>
+          <input type="date" id="histHasta">
+        </div>
+        <button class="btn btn-primary" onclick="runHistoricalSearch()">Buscar</button>
+      </div>
+      <div class="table-scroll" style="margin-top:14px;">
+        <table class="hist-table" id="histSearchTable">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Calibre</th>
+              <th>Est. verde</th><th>Real verde</th>
+              <th>Est. pintón</th><th>Real pintón</th>
+              <th>Est. alto</th><th>Real alto</th>
+              <th>Total est.</th><th>Total real</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="10" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============ TAB CUMPLIMIENTO ============ -->
@@ -397,6 +427,56 @@ function datesInMonth(monthStr){
     dates.push(year+'-'+String(month).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   }
   return dates;
+}
+
+function datesInRange(startStr, endStr){
+  const dates = [];
+  let cur = new Date(startStr+'T00:00:00');
+  const end = new Date(endStr+'T00:00:00');
+  if(isNaN(cur.getTime()) || isNaN(end.getTime()) || cur>end) return dates;
+  while(cur<=end){
+    dates.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'));
+    cur.setDate(cur.getDate()+1);
+  }
+  return dates;
+}
+
+async function runHistoricalSearch(){
+  const desde = document.getElementById('histDesde').value;
+  const hasta = document.getElementById('histHasta').value;
+  const tbody = document.querySelector('#histSearchTable tbody');
+  if(!desde || !hasta){
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
+    return;
+  }
+  const dateList = datesInRange(desde, hasta);
+  if(dateList.length===0){
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">Buscando…</td></tr>';
+
+  const rowsHtml = [];
+  for(const fecha of dateList){
+    const rows = await getEffectiveVpmRows(fecha, state.tipo);
+    if(!rows) continue;
+    rows.forEach(r=>{
+      const te = r.ev+r.ep+r.ea, tr = r.rv+r.rp+r.ra;
+      rowsHtml.push('<tr>' +
+        '<td>'+fecha+'</td><td class="left">'+r.calibre+'</td>' +
+        '<td>'+fmt(r.ev)+'</td><td>'+fmt(r.rv)+'</td>' +
+        '<td>'+fmt(r.ep)+'</td><td>'+fmt(r.rp)+'</td>' +
+        '<td>'+fmt(r.ea)+'</td><td>'+fmt(r.ra)+'</td>' +
+        '<td>'+fmt(te)+'</td><td>'+fmt(tr)+'</td>' +
+        '</tr>');
+    });
+  }
+
+  if(rowsHtml.length===0){
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">No hay proceso de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
+  } else {
+    tbody.innerHTML = rowsHtml.join('');
+  }
 }
 
 async function getAggregatedRows(tipo, dateList){
@@ -1263,7 +1343,7 @@ async function refreshLiveSheet(silent){
   if(statusEl && !silent) statusEl.textContent = 'Actualizando desde Google Sheets…';
   try{
     importedVpm = await fetchLiveSheetData(sheetId);
-    populateImportedDatesUI('conectado en vivo a Google Sheets', '');
+    populateImportedDatesUI('conectado en vivo a Google Sheets', '', !silent);
     if(statusEl) statusEl.textContent = 'Conectado. Última actualización: ' + new Date().toLocaleTimeString('es-CO');
     if(exportRow) exportRow.style.display = '';
     if(dotEl) dotEl.style.background = 'var(--verde-deep)';
@@ -1394,7 +1474,7 @@ function handleExcelUpload(evt){
   reader.readAsArrayBuffer(file);
 }
 
-function populateImportedDatesUI(statusMsg, warningMsg){
+function populateImportedDatesUI(statusMsg, warningMsg, jumpToLatest){
   importedDates = Object.keys(importedVpm).sort((a,b)=>b.localeCompare(a));
 
   const statusEl = document.getElementById('excelStatus');
@@ -1414,10 +1494,14 @@ function populateImportedDatesUI(statusMsg, warningMsg){
   const exportRow = document.getElementById('exportRow');
   if(exportRow) exportRow.style.display = importedDates.length ? '' : 'none';
 
-  if(importedDates.length){
+  if(jumpToLatest && importedDates.length){
     document.getElementById('fechaInput').value = importedDates[0];
     state.fecha = importedDates[0];
     onContextChange();
+  } else if(!jumpToLatest){
+    // Refresco silencioso: no tocar el filtro que la persona ya eligió, solo refrescar la vista actual con los datos nuevos.
+    if(state.viewMode==='dia'){ loadCurrentVpm(); loadCurrentCumpl(); }
+    else { loadPeriodView(); }
   }
 }
 
@@ -1491,9 +1575,11 @@ async function ensureStorage(){
 
 /* ---------------- INIT ---------------- */
 document.getElementById('fechaInput').value = todayStr();
+document.getElementById('histDesde').value = todayStr();
+document.getElementById('histHasta').value = todayStr();
 buildTipoChips();
 if(Object.keys(importedVpm).length){
-  populateImportedDatesUI('datos incluidos en este archivo', '');
+  populateImportedDatesUI('datos incluidos en este archivo', '', true);
 }
 ensureStorage().then(async ()=>{
   refreshApiKeyStatus();
