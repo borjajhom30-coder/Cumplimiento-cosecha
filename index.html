@@ -291,6 +291,38 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       </div>
     </div>
 
+    <div class="panel">
+      <h2>Búsqueda histórica de cumplimiento</h2>
+      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Filtra uno o varios días para ver el % Proyectado, % Real y % de Diferencia por calibre y por color. Usa el tipo de fruta seleccionado arriba.</div>
+      <div class="upload-row" style="margin-top:0;">
+        <div class="field">
+          <label>Desde</label>
+          <input type="date" id="histCumplDesde">
+        </div>
+        <div class="field">
+          <label>Hasta</label>
+          <input type="date" id="histCumplHasta">
+        </div>
+        <button class="btn btn-primary" onclick="runHistoricalSearchCumpl()">Buscar</button>
+      </div>
+
+      <h3 style="margin-top:18px;">Por calibre</h3>
+      <div class="table-scroll">
+        <table class="hist-table" id="histCumplCalibreTable">
+          <thead><tr><th>Fecha</th><th>Calibre</th><th>Proyectado %</th><th>Real %</th><th>Diferencia %</th></tr></thead>
+          <tbody><tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:18px;">Por color</h3>
+      <div class="table-scroll">
+        <table class="hist-table" id="histCumplColorTable">
+          <thead><tr><th>Fecha</th><th>Color</th><th>Proyectado %</th><th>Real %</th><th>Diferencia %</th></tr></thead>
+          <tbody><tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -477,6 +509,52 @@ async function runHistoricalSearch(){
   } else {
     tbody.innerHTML = rowsHtml.join('');
   }
+}
+
+async function runHistoricalSearchCumpl(){
+  const desde = document.getElementById('histCumplDesde').value;
+  const hasta = document.getElementById('histCumplHasta').value;
+  const calTbody = document.querySelector('#histCumplCalibreTable tbody');
+  const colorTbody = document.querySelector('#histCumplColorTable tbody');
+  if(!desde || !hasta){
+    calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
+    return;
+  }
+  const dateList = datesInRange(desde, hasta);
+  if(dateList.length===0){
+    calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
+    return;
+  }
+  calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Buscando…</td></tr>';
+
+  const calRowsHtml = [];
+  const colorRowsHtml = [];
+  for(const fecha of dateList){
+    const rows = await getEffectiveVpmRows(fecha, state.tipo);
+    if(!rows) continue;
+    const data = computeCumplFromRows(rows);
+    data.calibre.forEach(c=>{
+      const diff = c.real - c.proy;
+      calRowsHtml.push('<tr>' +
+        '<td>'+fecha+'</td><td class="left">'+c.calibre+'</td>' +
+        '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
+        '<td>'+diffBadge(diff)+' pts</td>' +
+        '</tr>');
+    });
+    COLOR_KEYS.forEach(ck=>{
+      const c = data.color[ck.key];
+      const diff = c.real - c.proy;
+      colorRowsHtml.push('<tr>' +
+        '<td>'+fecha+'</td><td class="left">'+ck.label+'</td>' +
+        '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
+        '<td>'+diffBadge(diff)+' pts</td>' +
+        '</tr>');
+    });
+  }
+
+  const noDataMsg = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay proceso de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
+  calTbody.innerHTML = calRowsHtml.length ? calRowsHtml.join('') : noDataMsg;
+  colorTbody.innerHTML = colorRowsHtml.length ? colorRowsHtml.join('') : noDataMsg;
 }
 
 async function getAggregatedRows(tipo, dateList){
@@ -1577,6 +1655,8 @@ async function ensureStorage(){
 document.getElementById('fechaInput').value = todayStr();
 document.getElementById('histDesde').value = todayStr();
 document.getElementById('histHasta').value = todayStr();
+document.getElementById('histCumplDesde').value = todayStr();
+document.getElementById('histCumplHasta').value = todayStr();
 buildTipoChips();
 if(Object.keys(importedVpm).length){
   populateImportedDatesUI('datos incluidos en este archivo', '', true);
