@@ -242,6 +242,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
           <input type="date" id="histHasta">
         </div>
         <button class="btn btn-primary" onclick="runHistoricalSearch()">Buscar</button>
+        <button class="btn btn-ghost" onclick="clearHistoricalSearch()">Limpiar</button>
       </div>
       <div class="table-scroll" style="margin-top:14px;">
         <table class="hist-table" id="histSearchTable">
@@ -304,6 +305,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
           <input type="date" id="histCumplHasta">
         </div>
         <button class="btn btn-primary" onclick="runHistoricalSearchCumpl()">Buscar</button>
+        <button class="btn btn-ghost" onclick="clearHistoricalSearchCumpl()">Limpiar</button>
       </div>
 
       <h3 style="margin-top:18px;">Por calibre</h3>
@@ -511,6 +513,13 @@ async function runHistoricalSearch(){
   }
 }
 
+function clearHistoricalSearch(){
+  document.getElementById('histDesde').value = '';
+  document.getElementById('histHasta').value = '';
+  document.querySelector('#histSearchTable tbody').innerHTML =
+    '<tr><td colspan="10" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
+}
+
 async function runHistoricalSearchCumpl(){
   const desde = document.getElementById('histCumplDesde').value;
   const hasta = document.getElementById('histCumplHasta').value;
@@ -555,6 +564,14 @@ async function runHistoricalSearchCumpl(){
   const noDataMsg = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay proceso de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
   calTbody.innerHTML = calRowsHtml.length ? calRowsHtml.join('') : noDataMsg;
   colorTbody.innerHTML = colorRowsHtml.length ? colorRowsHtml.join('') : noDataMsg;
+}
+
+function clearHistoricalSearchCumpl(){
+  document.getElementById('histCumplDesde').value = '';
+  document.getElementById('histCumplHasta').value = '';
+  const placeholder = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
+  document.querySelector('#histCumplCalibreTable tbody').innerHTML = placeholder;
+  document.querySelector('#histCumplColorTable tbody').innerHTML = placeholder;
 }
 
 async function getAggregatedRows(tipo, dateList){
