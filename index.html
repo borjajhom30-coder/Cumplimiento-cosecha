@@ -55,6 +55,7 @@ select{min-width:170px;}
 .chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
 .chip.active{background:var(--navy);border-color:var(--navy);color:#fff;}
 .spacer{flex:1;}
+.field-disabled{opacity:.4;pointer-events:none;}
 .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;font-family:'Inter';}
 .btn:hover{background:#f6f7f6;}
 .btn-primary{background:var(--navy);border-color:var(--navy);color:#fff;}
@@ -196,9 +197,13 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       <label>Mes</label>
       <input type="month" id="mesInput" onchange="onContextChange()">
     </div>
-    <div class="field">
+    <div class="field" id="tipoFrutaField">
       <label>Tipo de fruta</label>
       <div class="chip-row" id="tipoChips"></div>
+    </div>
+    <div class="field" id="tipoDescarteField" style="display:none;">
+      <label>Tipo de descarte</label>
+      <div class="chip-row" id="descarteTipoChips"></div>
     </div>
     <div class="spacer"></div>
     <div class="field">
@@ -330,13 +335,6 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
 
   <!-- ============ TAB DESCARTE ============ -->
   <div id="tab-descarte" style="display:none;">
-
-    <div class="panel" style="padding:14px 18px;">
-      <div class="field">
-        <label>Tipo de descarte</label>
-        <div class="chip-row" id="descarteTipoChips"></div>
-      </div>
-    </div>
 
     <div class="panel" id="descarteNoDataMsg" style="display:none;text-align:center;padding:34px 20px;">
       <div style="font-size:28px;">🍍</div>
@@ -479,7 +477,12 @@ function switchTab(tab){
   document.getElementById('tab-vpm').style.display = tab==='vpm' ? '' : 'none';
   document.getElementById('tab-cumpl').style.display = tab==='cumpl' ? '' : 'none';
   document.getElementById('tab-descarte').style.display = tab==='descarte' ? '' : 'none';
-  if(tab==='descarte') loadDescarteView();
+
+  const esDescarte = tab==='descarte';
+  document.getElementById('tipoFrutaField').style.display = esDescarte ? 'none' : '';
+  document.getElementById('tipoDescarteField').style.display = esDescarte ? '' : 'none';
+
+  if(esDescarte) loadDescarteView();
 }
 
 function buildTipoChips(){
@@ -801,6 +804,11 @@ async function renderDescarteSummary(){
   }
   kpiHtml += kpiCard('Grupos con descarte', String(agg.grupoArr.length), '');
   kpiHtml += kpiCard('Motivos distintos', String(agg.motivoArr.length), '');
+  const EXCLUDED_MOTIVOS = ['muestreo','descorone'];
+  const totalSinMuestreoDescorone = records
+    .filter(r=> EXCLUDED_MOTIVOS.indexOf(String(r.motivo).trim().toLowerCase())===-1)
+    .reduce((a,r)=>a+r.kilos,0);
+  kpiHtml += kpiCard('Descartado sin Muestreo/Descorone', fmt(totalSinMuestreoDescorone)+' kg', '');
   document.getElementById('descarteKpiRow').innerHTML = kpiHtml;
 
   renderDescarteChart('descarteGrupoChart', agg.grupoArr);
