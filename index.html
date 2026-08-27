@@ -175,6 +175,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
     <div class="tabs">
       <button class="tab-btn active" data-tab="vpm" onclick="switchTab('vpm')">Base VPM</button>
       <button class="tab-btn" data-tab="cumpl" onclick="switchTab('cumpl')">Cumplimiento %</button>
+      <button class="tab-btn" data-tab="descarte" onclick="switchTab('descarte')">Descarte</button>
     </div>
   </div>
 
@@ -327,6 +328,71 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
 
   </div>
 
+  <!-- ============ TAB DESCARTE ============ -->
+  <div id="tab-descarte" style="display:none;">
+
+    <div class="panel" id="descarteNoDataMsg" style="display:none;text-align:center;padding:34px 20px;">
+      <div style="font-size:28px;">🍍</div>
+      <div style="font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-top:8px;" id="descarteNoDataText"></div>
+    </div>
+
+    <div class="panel" id="descarteSummaryPanel" style="display:none;">
+      <h2>Resumen de descarte — <span id="descarteSummaryTipoLabel"></span></h2>
+
+      <div class="kpi-row" id="descarteKpiRow"></div>
+
+      <h3>Kilos descartados por grupo</h3>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="descarteGrupoChart" role="img" aria-label="Kilos descartados por grupo">Gráfico de barras de kilos descartados por grupo.</canvas>
+      </div>
+
+      <h3 style="margin-top:22px;">Kilos descartados por motivo</h3>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="descarteMotivoChart" role="img" aria-label="Kilos descartados por motivo">Gráfico de barras de kilos descartados por motivo.</canvas>
+      </div>
+
+      <h3 style="margin-top:22px;">Detalle por grupo</h3>
+      <div class="table-scroll">
+        <table class="hist-table" id="descarteGrupoTable">
+          <thead><tr><th>Grupo</th><th>Kilos</th><th>% del total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:18px;">Detalle por motivo</h3>
+      <div class="table-scroll">
+        <table class="hist-table" id="descarteMotivoTable">
+          <thead><tr><th>Motivo de descarte</th><th>Kilos</th><th>% del total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Búsqueda histórica de descarte</h2>
+      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Filtra uno o varios días para ver el detalle de descarte (fecha, grupo, motivo y kilos). Usa el tipo de fruta seleccionado arriba.</div>
+      <div class="upload-row" style="margin-top:0;">
+        <div class="field">
+          <label>Desde</label>
+          <input type="date" id="histDescarteDesde">
+        </div>
+        <div class="field">
+          <label>Hasta</label>
+          <input type="date" id="histDescarteHasta">
+        </div>
+        <button class="btn btn-primary" onclick="runHistoricalSearchDescarte()">Buscar</button>
+        <button class="btn btn-ghost" onclick="clearHistoricalSearchDescarte()">Limpiar</button>
+      </div>
+      <div class="table-scroll" style="margin-top:14px;">
+        <table class="hist-table" id="histDescarteTable">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Grupo</th><th>Motivo de descarte</th><th>Kilos</th></tr></thead>
+          <tbody><tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -354,6 +420,10 @@ const COLOR_KEYS = [
 
 let state = { fecha: todayStr(), tipo: 'normal' };
 let vpmChartCalibre = null, vpmChartColor = null, cumplChartCalibre = null, cumplChartColor = null;
+let activeTab = 'vpm';
+let importedDescarte = [];
+let descarteLoaded = false;
+let descarteChartGrupo = null, descarteChartMotivo = null;
 let importedVpm = (typeof window.__EMBEDDED_VPM_DATA__ !== 'undefined' && window.__EMBEDDED_VPM_DATA__) ? window.__EMBEDDED_VPM_DATA__ : {};
 let importedDates = [];
 
@@ -393,9 +463,12 @@ function setStatus(msg){
 }
 
 function switchTab(tab){
+  activeTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.getElementById('tab-vpm').style.display = tab==='vpm' ? '' : 'none';
   document.getElementById('tab-cumpl').style.display = tab==='cumpl' ? '' : 'none';
+  document.getElementById('tab-descarte').style.display = tab==='descarte' ? '' : 'none';
+  if(tab==='descarte') loadDescarteView();
 }
 
 function buildTipoChips(){
@@ -574,6 +647,212 @@ function clearHistoricalSearchCumpl(){
   document.querySelector('#histCumplColorTable tbody').innerHTML = placeholder;
 }
 
+/* ---------------- DESCARTE TAB ---------------- */
+
+function tipoFromDescarteValue(v){
+  const t = String(v||'').trim().toLowerCase();
+  if(t.indexOf('floracion')===0 || t.indexOf('floración')===0) return 'adelantada';
+  if(t.indexOf('induccion')===0 || t.indexOf('inducción')===0) return 'normal';
+  return null;
+}
+
+async function fetchDescarteData(sheetId){
+  const url = 'https://docs.google.com/spreadsheets/d/'+sheetId+'/gviz/tq?sheet='+encodeURIComponent('Base de datos de rechazo')+'&headers=1';
+  const response = await fetchGvizViaJsonp(url, 15000);
+  if(!response || response.status === 'error'){
+    const reason = (response && response.errors && response.errors[0] && response.errors[0].detailed_message) || 'la hoja no se pudo leer';
+    throw new Error('Google Sheets respondió con un error: ' + reason + '. Verifica que exista la pestaña "Base de datos de rechazo".');
+  }
+  const rows = gvizTableToRows(response.table);
+  const records = [];
+  rows.forEach(r=>{
+    if(!r || !r[3]) return;
+    const fecha = dateKeyFromCsvString(r[3]);
+    if(!fecha) return;
+    const tipo = tipoFromDescarteValue(r[4]);
+    if(!tipo) return;
+    const grupo = (r[5]!=null && String(r[5]).trim()!=='') ? String(r[5]).trim() : '(Sin grupo)';
+    const motivo = (r[11]!=null && String(r[11]).trim()!=='') ? String(r[11]).trim() : '(Sin motivo)';
+    const kilos = Number(r[10])||0;
+    records.push({fecha, tipo, grupo, motivo, kilos});
+  });
+  return records;
+}
+
+async function ensureDescarteLoaded(){
+  if(descarteLoaded) return;
+  const sheetId = (typeof window.__EMBEDDED_SHEET_ID__ !== 'undefined' && window.__EMBEDDED_SHEET_ID__) || await getSetting('sheetId');
+  if(!sheetId) return;
+  importedDescarte = await fetchDescarteData(sheetId);
+  descarteLoaded = true;
+}
+
+function getDescarteRecordsForPeriod(){
+  let dateSet;
+  if(state.viewMode==='semana') dateSet = new Set(datesInWeek(state.semana));
+  else if(state.viewMode==='mes') dateSet = new Set(datesInMonth(state.mes));
+  else dateSet = new Set([state.fecha]);
+  return importedDescarte.filter(r=> dateSet.has(r.fecha) && r.tipo===state.tipo);
+}
+
+function aggregateDescarte(records){
+  const byGrupo = {}, byMotivo = {};
+  let total = 0;
+  records.forEach(r=>{
+    byGrupo[r.grupo] = (byGrupo[r.grupo]||0) + r.kilos;
+    byMotivo[r.motivo] = (byMotivo[r.motivo]||0) + r.kilos;
+    total += r.kilos;
+  });
+  const grupoArr = Object.keys(byGrupo).map(k=>({key:k, kilos:byGrupo[k]})).sort((a,b)=>b.kilos-a.kilos);
+  const motivoArr = Object.keys(byMotivo).map(k=>({key:k, kilos:byMotivo[k]})).sort((a,b)=>b.kilos-a.kilos);
+  return {total, grupoArr, motivoArr};
+}
+
+async function loadDescarteView(){
+  try{
+    await ensureDescarteLoaded();
+  }catch(err){
+    document.getElementById('descarteNoDataMsg').style.display = '';
+    document.getElementById('descarteNoDataText').textContent = 'No se pudo cargar el descarte: ' + err.message;
+    document.getElementById('descarteSummaryPanel').style.display = 'none';
+    return;
+  }
+  await renderDescarteSummary();
+}
+
+async function renderDescarteSummary(){
+  const records = getDescarteRecordsForPeriod();
+  const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
+
+  if(records.length===0){
+    document.getElementById('descarteNoDataMsg').style.display = '';
+    document.getElementById('descarteNoDataText').textContent = 'En ' + periodDescriptionForMsg() + ' no hay descarte registrado de ' + tipoLabel + '.';
+    document.getElementById('descarteSummaryPanel').style.display = 'none';
+    return;
+  }
+  document.getElementById('descarteNoDataMsg').style.display = 'none';
+  document.getElementById('descarteSummaryPanel').style.display = '';
+
+  let periodLabel = tipoLabel;
+  if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
+  else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
+  document.getElementById('descarteSummaryTipoLabel').textContent = periodLabel;
+
+  const agg = aggregateDescarte(records);
+
+  let cosechado = 0;
+  if(state.viewMode==='dia'){
+    const rows = await getEffectiveVpmRows(state.fecha, state.tipo);
+    if(rows) cosechado = rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
+  } else {
+    const dateList = state.viewMode==='semana' ? datesInWeek(state.semana) : datesInMonth(state.mes);
+    const agr = await getAggregatedRows(state.tipo, dateList);
+    cosechado = agr.rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
+  }
+
+  let kpiHtml = kpiCard('Total descartado', fmt(agg.total)+' kg', '');
+  if(cosechado>0){
+    const pct = agg.total/cosechado;
+    kpiHtml += kpiCard('% sobre cosechado real', fmtPct(pct), pct>0.05?'down':'up');
+  }
+  kpiHtml += kpiCard('Grupos con descarte', String(agg.grupoArr.length), '');
+  kpiHtml += kpiCard('Motivos distintos', String(agg.motivoArr.length), '');
+  document.getElementById('descarteKpiRow').innerHTML = kpiHtml;
+
+  renderDescarteChart('descarteGrupoChart', agg.grupoArr);
+  renderDescarteChart('descarteMotivoChart', agg.motivoArr);
+
+  document.querySelector('#descarteGrupoTable tbody').innerHTML = agg.grupoArr.map(x=>
+    '<tr><td class="left">'+x.key+'</td><td>'+fmt(x.kilos)+' kg</td><td>'+fmtPct(agg.total>0?x.kilos/agg.total:0)+'</td></tr>'
+  ).join('') || '<tr><td colspan="3" style="color:var(--ink-mute);">Sin datos.</td></tr>';
+
+  document.querySelector('#descarteMotivoTable tbody').innerHTML = agg.motivoArr.map(x=>
+    '<tr><td class="left">'+x.key+'</td><td>'+fmt(x.kilos)+' kg</td><td>'+fmtPct(agg.total>0?x.kilos/agg.total:0)+'</td></tr>'
+  ).join('') || '<tr><td colspan="3" style="color:var(--ink-mute);">Sin datos.</td></tr>';
+}
+
+function renderDescarteChart(canvasId, arr){
+  const ctx = document.getElementById(canvasId);
+  let data = arr;
+  let restKilos = 0;
+  if(arr.length>10){
+    data = arr.slice(0,10);
+    restKilos = arr.slice(10).reduce((a,x)=>a+x.kilos,0);
+  }
+  const labels = data.map(x=>x.key);
+  const values = data.map(x=>x.kilos);
+  if(restKilos>0){ labels.push('Otros'); values.push(restKilos); }
+  const total = arr.reduce((a,x)=>a+x.kilos,0);
+
+  if(canvasId==='descarteGrupoChart' && descarteChartGrupo){ descarteChartGrupo.destroy(); }
+  if(canvasId==='descarteMotivoChart' && descarteChartMotivo){ descarteChartMotivo.destroy(); }
+
+  const chart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data: values, backgroundColor:'#c0392b', borderRadius:4 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:26 } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label:(c)=> fmt(c.raw)+' kg' } },
+        datalabels:{ anchor:'end', align:'end', offset:2, color:'#5c6b73', font:{size:10,weight:'600'},
+          formatter:(v)=> fmt(v)+' ('+(total>0?Math.round(v/total*100):0)+'%)' }
+      },
+      scales:{
+        y:{ beginAtZero:true, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>fmt(v)} },
+        x:{ grid:{display:false}, ticks:{autoSkip:false, maxRotation:40, minRotation:0} }
+      }
+    }
+  });
+  if(canvasId==='descarteGrupoChart') descarteChartGrupo = chart;
+  else descarteChartMotivo = chart;
+}
+
+async function runHistoricalSearchDescarte(){
+  const desde = document.getElementById('histDescarteDesde').value;
+  const hasta = document.getElementById('histDescarteHasta').value;
+  const tbody = document.querySelector('#histDescarteTable tbody');
+  if(!desde || !hasta){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
+    return;
+  }
+  const dateList = datesInRange(desde, hasta);
+  if(dateList.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Buscando…</td></tr>';
+
+  try{
+    await ensureDescarteLoaded();
+  }catch(err){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">No se pudo cargar el descarte: ' + err.message + '</td></tr>';
+    return;
+  }
+
+  const dateSet = new Set(dateList);
+  const records = importedDescarte
+    .filter(r=> dateSet.has(r.fecha) && r.tipo===state.tipo)
+    .sort((a,b)=> a.fecha.localeCompare(b.fecha));
+
+  if(records.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay descarte de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = records.map(r=>
+    '<tr><td>'+r.fecha+'</td><td><span class="tag '+r.tipo+'">'+TIPOS.find(t=>t.key===r.tipo).label+'</span></td>' +
+    '<td class="left">'+r.grupo+'</td><td class="left">'+r.motivo+'</td><td>'+fmt(r.kilos)+' kg</td></tr>'
+  ).join('');
+}
+
+function clearHistoricalSearchDescarte(){
+  document.getElementById('histDescarteDesde').value = '';
+  document.getElementById('histDescarteHasta').value = '';
+  document.querySelector('#histDescarteTable tbody').innerHTML =
+    '<tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
+}
+
 async function getAggregatedRows(tipo, dateList){
   const calibres = CALIBRE_SETS[tipo];
   const sums = calibres.map(c=>({calibre:c, ev:0, rv:0, ep:0, rp:0, ea:0, ra:0}));
@@ -632,6 +911,7 @@ function onContextChange(){
   } else {
     loadPeriodView();
   }
+  if(activeTab==='descarte') loadDescarteView();
 }
 
 function periodDescriptionForMsg(){
@@ -1674,6 +1954,8 @@ document.getElementById('histDesde').value = todayStr();
 document.getElementById('histHasta').value = todayStr();
 document.getElementById('histCumplDesde').value = todayStr();
 document.getElementById('histCumplHasta').value = todayStr();
+document.getElementById('histDescarteDesde').value = todayStr();
+document.getElementById('histDescarteHasta').value = todayStr();
 buildTipoChips();
 if(Object.keys(importedVpm).length){
   populateImportedDatesUI('datos incluidos en este archivo', '', true);
