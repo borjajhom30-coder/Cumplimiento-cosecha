@@ -249,6 +249,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         </div>
         <button class="btn btn-primary" onclick="runHistoricalSearch()">Buscar</button>
         <button class="btn btn-ghost" onclick="clearHistoricalSearch()">Limpiar</button>
+        <button class="btn btn-primary" onclick="exportHistSearchExcel()">⬇ Descargar Excel</button>
       </div>
       <div class="table-scroll" style="margin-top:14px;">
         <table class="hist-table" id="histSearchTable">
@@ -312,6 +313,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         </div>
         <button class="btn btn-primary" onclick="runHistoricalSearchCumpl()">Buscar</button>
         <button class="btn btn-ghost" onclick="clearHistoricalSearchCumpl()">Limpiar</button>
+        <button class="btn btn-primary" onclick="exportHistSearchCumplExcel()">⬇ Descargar Excel</button>
       </div>
 
       <h3 style="margin-top:18px;">Por calibre</h3>
@@ -391,6 +393,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         </div>
         <button class="btn btn-primary" onclick="runHistoricalSearchDescarte()">Buscar</button>
         <button class="btn btn-ghost" onclick="clearHistoricalSearchDescarte()">Limpiar</button>
+        <button class="btn btn-primary" onclick="exportHistDescarteExcel()">⬇ Descargar Excel</button>
       </div>
       <div class="table-scroll" style="margin-top:14px;">
         <table class="hist-table" id="histDescarteTable">
@@ -566,6 +569,7 @@ async function runHistoricalSearch(){
   const desde = document.getElementById('histDesde').value;
   const hasta = document.getElementById('histHasta').value;
   const tbody = document.querySelector('#histSearchTable tbody');
+  lastHistSearchRows = [];
   if(!desde || !hasta){
     tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
     return;
@@ -578,6 +582,7 @@ async function runHistoricalSearch(){
   tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">Buscando…</td></tr>';
 
   const rowsHtml = [];
+  const dataRows = [];
   for(const fecha of dateList){
     const rows = await getEffectiveVpmRows(fecha, state.tipo);
     if(!rows) continue;
@@ -590,6 +595,7 @@ async function runHistoricalSearch(){
         '<td>'+fmt(r.ea)+'</td><td>'+fmt(r.ra)+'</td>' +
         '<td>'+fmt(te)+'</td><td>'+fmt(tr)+'</td>' +
         '</tr>');
+      dataRows.push([fecha, r.calibre, r.ev, r.rv, r.ep, r.rp, r.ea, r.ra, te, tr]);
     });
   }
 
@@ -597,7 +603,22 @@ async function runHistoricalSearch(){
     tbody.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute);">No hay proceso de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
   } else {
     tbody.innerHTML = rowsHtml.join('');
+    lastHistSearchRows = dataRows;
+    lastHistSearchRange = {desde, hasta};
   }
+}
+
+function exportHistSearchExcel(){
+  if(!lastHistSearchRows.length){
+    setStatus('Primero haz una búsqueda con resultados');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const header = ['Fecha','Calibre','Est. verde','Real verde','Est. pintón','Real pintón','Est. alto','Real alto','Total est.','Total real'];
+  const data = [header].concat(lastHistSearchRows);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Base VPM');
+  const fname = 'base_vpm_' + (lastHistSearchRange.desde||'') + '_a_' + (lastHistSearchRange.hasta||'') + '.xlsx';
+  XLSX.writeFile(wb, fname);
 }
 
 function clearHistoricalSearch(){
@@ -605,6 +626,8 @@ function clearHistoricalSearch(){
   document.getElementById('histHasta').value = '';
   document.querySelector('#histSearchTable tbody').innerHTML =
     '<tr><td colspan="10" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
+  lastHistSearchRows = [];
+  lastHistSearchRange = {desde:'', hasta:''};
 }
 
 async function runHistoricalSearchCumpl(){
@@ -612,6 +635,8 @@ async function runHistoricalSearchCumpl(){
   const hasta = document.getElementById('histCumplHasta').value;
   const calTbody = document.querySelector('#histCumplCalibreTable tbody');
   const colorTbody = document.querySelector('#histCumplColorTable tbody');
+  lastHistCumplCalRows = [];
+  lastHistCumplColorRows = [];
   if(!desde || !hasta){
     calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
     return;
@@ -625,6 +650,8 @@ async function runHistoricalSearchCumpl(){
 
   const calRowsHtml = [];
   const colorRowsHtml = [];
+  const calDataRows = [];
+  const colorDataRows = [];
   for(const fecha of dateList){
     const rows = await getEffectiveVpmRows(fecha, state.tipo);
     if(!rows) continue;
@@ -636,6 +663,7 @@ async function runHistoricalSearchCumpl(){
         '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
         '<td>'+diffBadge(diff)+' pts</td>' +
         '</tr>');
+      calDataRows.push([fecha, c.calibre, Math.round(c.proy*10)/10, Math.round(c.real*10)/10, Math.round(diff*10)/10]);
     });
     COLOR_KEYS.forEach(ck=>{
       const c = data.color[ck.key];
@@ -645,12 +673,30 @@ async function runHistoricalSearchCumpl(){
         '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
         '<td>'+diffBadge(diff)+' pts</td>' +
         '</tr>');
+      colorDataRows.push([fecha, ck.label, Math.round(c.proy*10)/10, Math.round(c.real*10)/10, Math.round(diff*10)/10]);
     });
   }
 
   const noDataMsg = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay proceso de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
   calTbody.innerHTML = calRowsHtml.length ? calRowsHtml.join('') : noDataMsg;
   colorTbody.innerHTML = colorRowsHtml.length ? colorRowsHtml.join('') : noDataMsg;
+  lastHistCumplCalRows = calDataRows;
+  lastHistCumplColorRows = colorDataRows;
+  lastHistCumplRange = {desde, hasta};
+}
+
+function exportHistSearchCumplExcel(){
+  if(!lastHistCumplCalRows.length && !lastHistCumplColorRows.length){
+    setStatus('Primero haz una búsqueda con resultados');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const headerCal = ['Fecha','Calibre','Proyectado %','Real %','Diferencia (pts)'];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerCal].concat(lastHistCumplCalRows)), 'Por calibre');
+  const headerColor = ['Fecha','Color','Proyectado %','Real %','Diferencia (pts)'];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerColor].concat(lastHistCumplColorRows)), 'Por color');
+  const fname = 'cumplimiento_' + (lastHistCumplRange.desde||'') + '_a_' + (lastHistCumplRange.hasta||'') + '.xlsx';
+  XLSX.writeFile(wb, fname);
 }
 
 function clearHistoricalSearchCumpl(){
@@ -659,6 +705,9 @@ function clearHistoricalSearchCumpl(){
   const placeholder = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
   document.querySelector('#histCumplCalibreTable tbody').innerHTML = placeholder;
   document.querySelector('#histCumplColorTable tbody').innerHTML = placeholder;
+  lastHistCumplCalRows = [];
+  lastHistCumplColorRows = [];
+  lastHistCumplRange = {desde:'', hasta:''};
 }
 
 /* ---------------- DESCARTE TAB ---------------- */
@@ -671,6 +720,13 @@ const DESCARTE_TIPOS = [
 let lastDescarteAgg = null;
 let lastDescarteRecords = [];
 let lastDescartePeriodLabel = '';
+let lastHistDescarteRecords = [];
+let lastHistSearchRows = [];
+let lastHistSearchRange = {desde:'', hasta:''};
+let lastHistCumplCalRows = [];
+let lastHistCumplColorRows = [];
+let lastHistCumplRange = {desde:'', hasta:''};
+let lastHistDescarteRange = {desde:'', hasta:''};
 
 function buildDescarteTipoChips(){
   const wrap = document.getElementById('descarteTipoChips');
@@ -892,6 +948,7 @@ async function runHistoricalSearchDescarte(){
   const desde = document.getElementById('histDescarteDesde').value;
   const hasta = document.getElementById('histDescarteHasta').value;
   const tbody = document.querySelector('#histDescarteTable tbody');
+  lastHistDescarteRecords = [];
   if(!desde || !hasta){
     tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
     return;
@@ -924,6 +981,22 @@ async function runHistoricalSearchDescarte(){
     '<tr><td>'+r.fecha+'</td><td><span class="tag '+r.tipo+'">'+TIPOS.find(t=>t.key===r.tipo).label+'</span></td>' +
     '<td class="left">'+r.grupo+'</td><td class="left">'+r.motivo+'</td><td>'+fmt(r.kilos)+' kg</td></tr>'
   ).join('');
+  lastHistDescarteRecords = records;
+  lastHistDescarteRange = {desde, hasta};
+}
+
+function exportHistDescarteExcel(){
+  if(!lastHistDescarteRecords.length){
+    setStatus('Primero haz una búsqueda con resultados');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const data = [['Fecha','Tipo','Grupo','Motivo de descarte','Kilos']].concat(
+    lastHistDescarteRecords.map(r=>[r.fecha, TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo, r.grupo, r.motivo, r.kilos])
+  );
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Descarte');
+  const fname = 'descarte_' + (lastHistDescarteRange.desde||'') + '_a_' + (lastHistDescarteRange.hasta||'') + '.xlsx';
+  XLSX.writeFile(wb, fname);
 }
 
 function clearHistoricalSearchDescarte(){
@@ -931,6 +1004,8 @@ function clearHistoricalSearchDescarte(){
   document.getElementById('histDescarteHasta').value = '';
   document.querySelector('#histDescarteTable tbody').innerHTML =
     '<tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
+  lastHistDescarteRecords = [];
+  lastHistDescarteRange = {desde:'', hasta:''};
 }
 
 async function getAggregatedRows(tipo, dateList){
@@ -2052,4 +2127,4 @@ ensureStorage().then(async ()=>{
 });
 </script>
 </body>
-</html>
+</ht
