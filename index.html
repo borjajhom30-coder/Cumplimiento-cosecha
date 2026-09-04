@@ -181,41 +181,33 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
   </div>
 
   <div class="controls">
-    <div class="field">
+    <div class="field" id="vistaField">
       <label>Vista</label>
       <div class="chip-row" id="viewModeChips"></div>
     </div>
     <div class="field" id="fechaField">
-      <label>Día(s)</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input type="date" id="fechaInput">
-        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('dia')">+ Agregar</button>
-      </div>
-      <div class="chip-row" id="diaChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
+      <label>Fecha</label>
+      <input type="date" id="fechaInput" onchange="onContextChange()">
     </div>
     <div class="field" id="semanaField" style="display:none;">
-      <label>Semana(s)</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input type="week" id="semanaInput">
-        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('semana')">+ Agregar</button>
-      </div>
-      <div class="chip-row" id="semanaChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
+      <label>Semana</label>
+      <input type="week" id="semanaInput" onchange="onContextChange()">
     </div>
     <div class="field" id="mesField" style="display:none;">
-      <label>Mes(es)</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input type="month" id="mesInput">
-        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('mes')">+ Agregar</button>
-      </div>
-      <div class="chip-row" id="mesChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
+      <label>Mes</label>
+      <input type="month" id="mesInput" onchange="onContextChange()">
     </div>
     <div class="field" id="anioField" style="display:none;">
-      <label>Año(s)</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <select id="anioInput" style="min-width:100px;"></select>
-        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('anio')">+ Agregar</button>
-      </div>
-      <div class="chip-row" id="anioChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
+      <label>Año</label>
+      <select id="anioInput" style="min-width:100px;" onchange="onContextChange()"></select>
+    </div>
+    <div class="field" id="descarteRangoField" style="display:none;">
+      <label>Desde</label>
+      <input type="date" id="descarteDesdeInput" onchange="onContextChange()">
+    </div>
+    <div class="field" id="descarteRangoHastaField" style="display:none;">
+      <label>Hasta</label>
+      <input type="date" id="descarteHastaInput" onchange="onContextChange()">
     </div>
     <div class="field" id="tipoFrutaField">
       <label>Tipo de fruta</label>
@@ -413,25 +405,15 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
     </div>
 
     <div class="panel">
-      <h2>Búsqueda histórica de descarte</h2>
-      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Filtra uno o varios días para ver el detalle de descarte (fecha, grupo, motivo y kilos). Usa el tipo de descarte seleccionado arriba.</div>
+      <h2>Detalle de descarte (fila por fila)</h2>
+      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Usa el rango de fechas y el tipo de descarte seleccionados arriba.</div>
       <div class="upload-row" style="margin-top:0;">
-        <div class="field">
-          <label>Desde</label>
-          <input type="date" id="histDescarteDesde">
-        </div>
-        <div class="field">
-          <label>Hasta</label>
-          <input type="date" id="histDescarteHasta">
-        </div>
-        <button class="btn btn-primary" onclick="runHistoricalSearchDescarte()">Buscar</button>
-        <button class="btn btn-ghost" onclick="clearHistoricalSearchDescarte()">Limpiar</button>
         <button class="btn btn-primary" onclick="exportHistDescarteExcel()">⬇ Descargar Excel</button>
       </div>
       <div class="table-scroll" style="margin-top:14px;">
         <table class="hist-table" id="histDescarteTable">
           <thead><tr><th>Fecha</th><th>Tipo</th><th>Grupo</th><th>Motivo de descarte</th><th>Lugar de descarte</th><th>Kilos</th></tr></thead>
-          <tbody><tr><td colspan="6" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
+          <tbody><tr><td colspan="6" style="color:var(--ink-mute);">Sin datos para el rango seleccionado.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -463,7 +445,7 @@ const COLOR_KEYS = [
   {key:'alto', label:'Alto (3.0 - 4.0)', deep:'#8a281c'}
 ];
 
-let state = { fecha: todayStr(), tipo: 'normal', chips: {dia:[], semana:[], mes:[], anio:[]} };
+let state = { fecha: todayStr(), tipo: 'normal', descarteDesde: todayStr(), descarteHasta: todayStr() };
 let vpmChartCalibre = null, vpmChartColor = null, cumplChartCalibre = null, cumplChartColor = null;
 let activeTab = 'vpm';
 let importedDescarte = [];
@@ -518,7 +500,7 @@ function switchTab(tab){
   document.getElementById('tipoFrutaField').style.display = esDescarte ? 'none' : '';
   document.getElementById('tipoDescarteField').style.display = esDescarte ? '' : 'none';
 
-  if(esDescarte) loadDescarteView();
+  onContextChange();
 }
 
 function buildTipoChips(){
@@ -592,81 +574,6 @@ function datesInYear(yearStr){
   return datesInRange(year+'-01-01', year+'-12-31');
 }
 
-function datesForChipValue(mode, value){
-  if(mode==='dia') return [value];
-  if(mode==='semana') return datesInWeek(value);
-  if(mode==='mes') return datesInMonth(value);
-  if(mode==='anio') return datesInYear(value);
-  return [];
-}
-
-function defaultChipForMode(mode){
-  if(mode==='dia') return todayStr();
-  if(mode==='semana') return isoWeekString(new Date());
-  if(mode==='mes') return todayStr().slice(0,7);
-  if(mode==='anio') return String(new Date().getFullYear());
-  return null;
-}
-
-function formatChipLabel(mode, v){
-  if(mode==='semana'){ const parts = v.split('-W'); return 'Sem ' + parts[1] + ' / ' + parts[0]; }
-  return v;
-}
-
-function addPeriodChip(mode){
-  const inputId = {dia:'fechaInput', semana:'semanaInput', mes:'mesInput', anio:'anioInput'}[mode];
-  const val = document.getElementById(inputId).value;
-  if(!val) return;
-  if(!state.chips) state.chips = {dia:[], semana:[], mes:[], anio:[]};
-  if(state.chips[mode].indexOf(val)===-1){
-    state.chips[mode].push(val);
-    state.chips[mode].sort();
-  }
-  renderPeriodChips(mode);
-  onContextChange();
-}
-
-function removePeriodChip(mode, val){
-  state.chips[mode] = state.chips[mode].filter(v=>v!==val);
-  renderPeriodChips(mode);
-  onContextChange();
-}
-
-function renderPeriodChips(mode){
-  const wrap = document.getElementById(mode+'ChipsRow');
-  if(!wrap) return;
-  const list = (state.chips && state.chips[mode]) || [];
-  if(list.length===0){
-    wrap.innerHTML = '<span style="font-size:12px;color:var(--ink-mute);">Sin agregar — usando ' + (mode==='dia'?'hoy':mode==='semana'?'esta semana':mode==='mes'?'este mes':'este año') + ' por defecto.</span>';
-    return;
-  }
-  wrap.innerHTML = list.map(v=>
-    '<span class="chip active" style="cursor:default;padding:6px 8px 6px 12px;">' + formatChipLabel(mode,v) +
-    '<span style="cursor:pointer;margin-left:8px;font-weight:800;" onclick="removePeriodChip(\''+mode+'\',\''+v+'\')">✕</span></span>'
-  ).join('');
-}
-
-function getDateListForCurrentPeriod(){
-  const mode = state.viewMode;
-  const chips = (state.chips && state.chips[mode]) || [];
-  const values = chips.length ? chips : [defaultChipForMode(mode)];
-  const set = new Set();
-  values.forEach(v=> datesForChipValue(mode, v).forEach(d=>set.add(d)));
-  return Array.from(set).sort();
-}
-
-function currentPeriodLabel(tipoLabel){
-  const mode = state.viewMode;
-  const chips = (state.chips && state.chips[mode]) || [];
-  let desc;
-  if(chips.length===0){
-    desc = mode==='dia' ? ('hoy ('+todayStr()+')') : mode==='semana' ? 'esta semana' : mode==='mes' ? 'este mes' : 'este año';
-  } else {
-    desc = chips.map(v=>formatChipLabel(mode,v)).join(', ');
-  }
-  return desc + ' — ' + tipoLabel;
-}
-
 function populateAnioSelect(){
   const sel = document.getElementById('anioInput');
   if(!sel || sel.options.length) return;
@@ -674,7 +581,13 @@ function populateAnioSelect(){
   const years = [];
   for(let y=current+1; y>=current-6; y--) years.push(y);
   sel.innerHTML = years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
-  sel.value = String(current);
+}
+
+function getDateListForCurrentPeriod(){
+  if(state.viewMode==='semana') return datesInWeek(state.semana);
+  if(state.viewMode==='mes') return datesInMonth(state.mes);
+  if(state.viewMode==='anio') return datesInYear(state.anio);
+  return [state.fecha];
 }
 
 function datesInRange(startStr, endStr){
@@ -905,8 +818,12 @@ async function ensureDescarteLoaded(){
   descarteLoaded = true;
 }
 
+function getDescarteDateList(){
+  return datesInRange(state.descarteDesde, state.descarteHasta);
+}
+
 function getDescarteRecordsForPeriod(){
-  const dateSet = new Set(getDateListForCurrentPeriod());
+  const dateSet = new Set(getDescarteDateList());
   const tipoFiltro = state.descarteTipo || 'normal';
   return importedDescarte.filter(r=> dateSet.has(r.fecha) && (tipoFiltro==='total' || r.tipo===tipoFiltro));
 }
@@ -945,16 +862,17 @@ async function renderDescarteSummary(){
 
   if(records.length===0){
     document.getElementById('descarteNoDataMsg').style.display = '';
-    document.getElementById('descarteNoDataText').textContent = 'En ' + periodDescriptionForMsg() + ' no hay descarte registrado de ' + tipoLabel + '.';
+    document.getElementById('descarteNoDataText').textContent = 'Entre ' + state.descarteDesde + ' y ' + state.descarteHasta + ' no hay descarte registrado de ' + tipoLabel + '.';
     document.getElementById('descarteSummaryPanel').style.display = 'none';
     lastDescarteAgg = null;
     lastDescarteRecords = [];
+    renderHistDescarteTable([]);
     return;
   }
   document.getElementById('descarteNoDataMsg').style.display = 'none';
   document.getElementById('descarteSummaryPanel').style.display = '';
 
-  const periodLabel = currentPeriodLabel(tipoLabel);
+  const periodLabel = 'Del ' + state.descarteDesde + ' al ' + state.descarteHasta + ' — ' + tipoLabel;
   document.getElementById('descarteSummaryTipoLabel').textContent = periodLabel;
   lastDescartePeriodLabel = periodLabel;
 
@@ -964,7 +882,7 @@ async function renderDescarteSummary(){
 
   let cosechado = 0;
   const tiposCosecha = (state.descarteTipo==='total') ? ['normal','adelantada'] : [state.descarteTipo||'normal'];
-  const dateListCosecha = getDateListForCurrentPeriod();
+  const dateListCosecha = getDescarteDateList();
   for(const tc of tiposCosecha){
     const agr = await getAggregatedRows(tc, dateListCosecha);
     cosechado += agr.rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
@@ -999,6 +917,8 @@ async function renderDescarteSummary(){
   document.querySelector('#descarteLugarTable tbody').innerHTML = agg.lugarArr.map(x=>
     '<tr><td class="left">'+x.key+'</td><td>'+fmt(x.kilos)+' kg</td><td>'+fmtPct(agg.total>0?x.kilos/agg.total:0)+'</td></tr>'
   ).join('') || '<tr><td colspan="3" style="color:var(--ink-mute);">Sin datos.</td></tr>';
+
+  renderHistDescarteTable(records);
 }
 
 function renderDescarteChart(canvasId, arr){
@@ -1069,56 +989,27 @@ function exportDescarteExcel(){
   );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detalleData), 'Detalle');
 
-  const chipsActuales = (state.chips && state.chips[state.viewMode]) || [];
-  const periodoNombre = chipsActuales.length ? chipsActuales.join('_') : (state.viewMode+'_actual');
-  const fname = 'descarte_' + periodoNombre.replace(/[^a-zA-Z0-9_-]/g,'') + '.xlsx';
+  const fname = 'descarte_' + state.descarteDesde + '_a_' + state.descarteHasta + '.xlsx';
   XLSX.writeFile(wb, fname);
 }
 
-async function runHistoricalSearchDescarte(){
-  const desde = document.getElementById('histDescarteDesde').value;
-  const hasta = document.getElementById('histDescarteHasta').value;
+function renderHistDescarteTable(records){
   const tbody = document.querySelector('#histDescarteTable tbody');
-  lastHistDescarteRecords = [];
-  if(!desde || !hasta){
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
-    return;
-  }
-  const dateList = datesInRange(desde, hasta);
-  if(dateList.length===0){
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">Buscando…</td></tr>';
-
-  try{
-    await ensureDescarteLoaded();
-  }catch(err){
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">No se pudo cargar el descarte: ' + err.message + '</td></tr>';
-    return;
-  }
-
-  const dateSet = new Set(dateList);
-  const tipoFiltro = state.descarteTipo || 'normal';
-  const records = importedDescarte
-    .filter(r=> dateSet.has(r.fecha) && (tipoFiltro==='total' || r.tipo===tipoFiltro))
-    .sort((a,b)=> a.fecha.localeCompare(b.fecha));
-
   if(records.length===0){
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">No hay descarte de ' + DESCARTE_TIPOS.find(t=>t.key===tipoFiltro).label + ' en ese rango de fechas.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">Sin datos para el rango seleccionado.</td></tr>';
+    lastHistDescarteRecords = [];
     return;
   }
   tbody.innerHTML = records.map(r=>
     '<tr><td>'+r.fecha+'</td><td><span class="tag '+r.tipo+'">'+TIPOS.find(t=>t.key===r.tipo).label+'</span></td>' +
     '<td class="left">'+r.grupo+'</td><td class="left">'+r.motivo+'</td><td class="left">'+r.lugar+'</td><td>'+fmt(r.kilos)+' kg</td></tr>'
   ).join('');
-  lastHistDescarteRecords = records;
-  lastHistDescarteRange = {desde, hasta};
+  lastHistDescarteRecords = records.slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
 }
 
 function exportHistDescarteExcel(){
   if(!lastHistDescarteRecords.length){
-    setStatus('Primero haz una búsqueda con resultados');
+    setStatus('No hay datos para exportar en el rango seleccionado');
     return;
   }
   const wb = XLSX.utils.book_new();
@@ -1126,17 +1017,8 @@ function exportHistDescarteExcel(){
     lastHistDescarteRecords.map(r=>[r.fecha, TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo, r.grupo, r.motivo, r.lugar, r.kilos])
   );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Descarte');
-  const fname = 'descarte_' + (lastHistDescarteRange.desde||'') + '_a_' + (lastHistDescarteRange.hasta||'') + '.xlsx';
+  const fname = 'descarte_' + state.descarteDesde + '_a_' + state.descarteHasta + '.xlsx';
   XLSX.writeFile(wb, fname);
-}
-
-function clearHistoricalSearchDescarte(){
-  document.getElementById('histDescarteDesde').value = '';
-  document.getElementById('histDescarteHasta').value = '';
-  document.querySelector('#histDescarteTable tbody').innerHTML =
-    '<tr><td colspan="6" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
-  lastHistDescarteRecords = [];
-  lastHistDescarteRange = {desde:'', hasta:''};
 }
 
 async function getAggregatedRows(tipo, dateList){
@@ -1156,40 +1038,68 @@ async function getAggregatedRows(tipo, dateList){
 
 function onContextChange(){
   if(!state.viewMode) state.viewMode = 'dia';
-  if(!state.chips) state.chips = {dia:[], semana:[], mes:[], anio:[]};
 
+  state.fecha = document.getElementById('fechaInput').value || todayStr();
+
+  const semanaInput = document.getElementById('semanaInput');
+  const mesInput = document.getElementById('mesInput');
+  const anioInput = document.getElementById('anioInput');
   populateAnioSelect();
 
-  document.getElementById('fechaField').style.display = state.viewMode==='dia' ? '' : 'none';
-  document.getElementById('semanaField').style.display = state.viewMode==='semana' ? '' : 'none';
-  document.getElementById('mesField').style.display = state.viewMode==='mes' ? '' : 'none';
-  document.getElementById('anioField').style.display = state.viewMode==='anio' ? '' : 'none';
+  if(state.viewMode==='semana'){
+    state.semana = semanaInput.value || state.semana || isoWeekString(new Date());
+  } else if(!state.semana){
+    state.semana = isoWeekString(new Date());
+  }
+  semanaInput.value = state.semana;
 
-  ['dia','semana','mes','anio'].forEach(renderPeriodChips);
+  if(state.viewMode==='mes'){
+    state.mes = mesInput.value || state.mes || todayStr().slice(0,7);
+  } else if(!state.mes){
+    state.mes = todayStr().slice(0,7);
+  }
+  mesInput.value = state.mes;
+
+  if(!state.anio) state.anio = String(new Date().getFullYear());
+  if(state.viewMode==='anio' && anioInput.value) state.anio = anioInput.value;
+  anioInput.value = state.anio;
+
+  state.descarteDesde = document.getElementById('descarteDesdeInput').value || state.descarteDesde || todayStr();
+  state.descarteHasta = document.getElementById('descarteHastaInput').value || state.descarteHasta || todayStr();
+  document.getElementById('descarteDesdeInput').value = state.descarteDesde;
+  document.getElementById('descarteHastaInput').value = state.descarteHasta;
+
+  const esDescarte = activeTab==='descarte';
+  document.getElementById('vistaField').style.display = esDescarte ? 'none' : '';
+  document.getElementById('fechaField').style.display = (!esDescarte && state.viewMode==='dia') ? '' : 'none';
+  document.getElementById('semanaField').style.display = (!esDescarte && state.viewMode==='semana') ? '' : 'none';
+  document.getElementById('mesField').style.display = (!esDescarte && state.viewMode==='mes') ? '' : 'none';
+  document.getElementById('anioField').style.display = (!esDescarte && state.viewMode==='anio') ? '' : 'none';
+  document.getElementById('descarteRangoField').style.display = esDescarte ? '' : 'none';
+  document.getElementById('descarteRangoHastaField').style.display = esDescarte ? '' : 'none';
 
   buildTipoChips();
   buildViewModeChips();
 
   const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
-  const periodLabel = currentPeriodLabel(tipoLabel);
+
+  let periodLabel = tipoLabel;
+  if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
+  else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
+  else if(state.viewMode==='anio') periodLabel = 'Año ' + state.anio + ' — ' + tipoLabel;
   document.getElementById('vpmSummaryTipoLabel').textContent = periodLabel;
   document.getElementById('cumplSummaryTipoLabel').textContent = periodLabel;
 
   loadPeriodView();
-  if(activeTab==='descarte') loadDescarteView();
+  if(esDescarte) loadDescarteView();
 }
 
 function periodDescriptionForMsg(){
-  const mode = state.viewMode;
-  const chips = (state.chips && state.chips[mode]) || [];
-  if(chips.length===0){
-    if(mode==='semana') return 'esta semana';
-    if(mode==='mes') return 'este mes';
-    if(mode==='anio') return 'este año';
-    const d = new Date(todayStr()+'T00:00:00');
-    return 'el ' + d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
-  }
-  return chips.map(v=>formatChipLabel(mode,v)).join(', ');
+  if(state.viewMode==='semana') return 'la semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0];
+  if(state.viewMode==='mes') return 'el mes de ' + state.mes;
+  if(state.viewMode==='anio') return 'el año ' + state.anio;
+  const d = new Date(state.fecha+'T00:00:00');
+  return 'el ' + d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
 }
 
 function showNoDataMessage(show){
@@ -2224,8 +2134,8 @@ document.getElementById('histDesde').value = todayStr();
 document.getElementById('histHasta').value = todayStr();
 document.getElementById('histCumplDesde').value = todayStr();
 document.getElementById('histCumplHasta').value = todayStr();
-document.getElementById('histDescarteDesde').value = todayStr();
-document.getElementById('histDescarteHasta').value = todayStr();
+document.getElementById('descarteDesdeInput').value = todayStr();
+document.getElementById('descarteHastaInput').value = todayStr();
 buildTipoChips();
 if(Object.keys(importedVpm).length){
   populateImportedDatesUI('datos incluidos en este archivo', '', true);
