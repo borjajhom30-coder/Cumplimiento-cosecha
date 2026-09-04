@@ -186,20 +186,36 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       <div class="chip-row" id="viewModeChips"></div>
     </div>
     <div class="field" id="fechaField">
-      <label>Fecha</label>
-      <input type="date" id="fechaInput" onchange="onContextChange()">
+      <label>Día(s)</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="date" id="fechaInput">
+        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('dia')">+ Agregar</button>
+      </div>
+      <div class="chip-row" id="diaChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
     </div>
     <div class="field" id="semanaField" style="display:none;">
-      <label>Semana</label>
-      <input type="week" id="semanaInput" onchange="onContextChange()">
+      <label>Semana(s)</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="week" id="semanaInput">
+        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('semana')">+ Agregar</button>
+      </div>
+      <div class="chip-row" id="semanaChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
     </div>
     <div class="field" id="mesField" style="display:none;">
-      <label>Mes</label>
-      <input type="month" id="mesInput" onchange="onContextChange()">
+      <label>Mes(es)</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="month" id="mesInput">
+        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('mes')">+ Agregar</button>
+      </div>
+      <div class="chip-row" id="mesChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
     </div>
     <div class="field" id="anioField" style="display:none;">
-      <label>Año</label>
-      <input type="number" id="anioInput" min="2000" max="2100" step="1" style="width:90px;" onchange="onContextChange()">
+      <label>Año(s)</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="anioInput" style="min-width:100px;"></select>
+        <button class="btn btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="addPeriodChip('anio')">+ Agregar</button>
+      </div>
+      <div class="chip-row" id="anioChipsRow" style="margin-top:6px;flex-wrap:wrap;"></div>
     </div>
     <div class="field" id="tipoFrutaField">
       <label>Tipo de fruta</label>
@@ -447,7 +463,7 @@ const COLOR_KEYS = [
   {key:'alto', label:'Alto (3.0 - 4.0)', deep:'#8a281c'}
 ];
 
-let state = { fecha: todayStr(), tipo: 'normal' };
+let state = { fecha: todayStr(), tipo: 'normal', chips: {dia:[], semana:[], mes:[], anio:[]} };
 let vpmChartCalibre = null, vpmChartColor = null, cumplChartCalibre = null, cumplChartColor = null;
 let activeTab = 'vpm';
 let importedDescarte = [];
@@ -574,6 +590,91 @@ function datesInMonth(monthStr){
 function datesInYear(yearStr){
   const year = Number(yearStr);
   return datesInRange(year+'-01-01', year+'-12-31');
+}
+
+function datesForChipValue(mode, value){
+  if(mode==='dia') return [value];
+  if(mode==='semana') return datesInWeek(value);
+  if(mode==='mes') return datesInMonth(value);
+  if(mode==='anio') return datesInYear(value);
+  return [];
+}
+
+function defaultChipForMode(mode){
+  if(mode==='dia') return todayStr();
+  if(mode==='semana') return isoWeekString(new Date());
+  if(mode==='mes') return todayStr().slice(0,7);
+  if(mode==='anio') return String(new Date().getFullYear());
+  return null;
+}
+
+function formatChipLabel(mode, v){
+  if(mode==='semana'){ const parts = v.split('-W'); return 'Sem ' + parts[1] + ' / ' + parts[0]; }
+  return v;
+}
+
+function addPeriodChip(mode){
+  const inputId = {dia:'fechaInput', semana:'semanaInput', mes:'mesInput', anio:'anioInput'}[mode];
+  const val = document.getElementById(inputId).value;
+  if(!val) return;
+  if(!state.chips) state.chips = {dia:[], semana:[], mes:[], anio:[]};
+  if(state.chips[mode].indexOf(val)===-1){
+    state.chips[mode].push(val);
+    state.chips[mode].sort();
+  }
+  renderPeriodChips(mode);
+  onContextChange();
+}
+
+function removePeriodChip(mode, val){
+  state.chips[mode] = state.chips[mode].filter(v=>v!==val);
+  renderPeriodChips(mode);
+  onContextChange();
+}
+
+function renderPeriodChips(mode){
+  const wrap = document.getElementById(mode+'ChipsRow');
+  if(!wrap) return;
+  const list = (state.chips && state.chips[mode]) || [];
+  if(list.length===0){
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--ink-mute);">Sin agregar — usando ' + (mode==='dia'?'hoy':mode==='semana'?'esta semana':mode==='mes'?'este mes':'este año') + ' por defecto.</span>';
+    return;
+  }
+  wrap.innerHTML = list.map(v=>
+    '<span class="chip active" style="cursor:default;padding:6px 8px 6px 12px;">' + formatChipLabel(mode,v) +
+    '<span style="cursor:pointer;margin-left:8px;font-weight:800;" onclick="removePeriodChip(\''+mode+'\',\''+v+'\')">✕</span></span>'
+  ).join('');
+}
+
+function getDateListForCurrentPeriod(){
+  const mode = state.viewMode;
+  const chips = (state.chips && state.chips[mode]) || [];
+  const values = chips.length ? chips : [defaultChipForMode(mode)];
+  const set = new Set();
+  values.forEach(v=> datesForChipValue(mode, v).forEach(d=>set.add(d)));
+  return Array.from(set).sort();
+}
+
+function currentPeriodLabel(tipoLabel){
+  const mode = state.viewMode;
+  const chips = (state.chips && state.chips[mode]) || [];
+  let desc;
+  if(chips.length===0){
+    desc = mode==='dia' ? ('hoy ('+todayStr()+')') : mode==='semana' ? 'esta semana' : mode==='mes' ? 'este mes' : 'este año';
+  } else {
+    desc = chips.map(v=>formatChipLabel(mode,v)).join(', ');
+  }
+  return desc + ' — ' + tipoLabel;
+}
+
+function populateAnioSelect(){
+  const sel = document.getElementById('anioInput');
+  if(!sel || sel.options.length) return;
+  const current = new Date().getFullYear();
+  const years = [];
+  for(let y=current+1; y>=current-6; y--) years.push(y);
+  sel.innerHTML = years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+  sel.value = String(current);
 }
 
 function datesInRange(startStr, endStr){
@@ -853,10 +954,7 @@ async function renderDescarteSummary(){
   document.getElementById('descarteNoDataMsg').style.display = 'none';
   document.getElementById('descarteSummaryPanel').style.display = '';
 
-  let periodLabel = tipoLabel;
-  if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
-  else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
-  else if(state.viewMode==='anio') periodLabel = 'Año ' + state.anio + ' — ' + tipoLabel;
+  const periodLabel = currentPeriodLabel(tipoLabel);
   document.getElementById('descarteSummaryTipoLabel').textContent = periodLabel;
   lastDescartePeriodLabel = periodLabel;
 
@@ -866,15 +964,10 @@ async function renderDescarteSummary(){
 
   let cosechado = 0;
   const tiposCosecha = (state.descarteTipo==='total') ? ['normal','adelantada'] : [state.descarteTipo||'normal'];
+  const dateListCosecha = getDateListForCurrentPeriod();
   for(const tc of tiposCosecha){
-    if(state.viewMode==='dia'){
-      const rows = await getEffectiveVpmRows(state.fecha, tc);
-      if(rows) cosechado += rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
-    } else {
-      const dateList = getDateListForCurrentPeriod();
-      const agr = await getAggregatedRows(tc, dateList);
-      cosechado += agr.rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
-    }
+    const agr = await getAggregatedRows(tc, dateListCosecha);
+    cosechado += agr.rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
   }
 
   let kpiHtml = kpiCard('Total descartado', fmt(agg.total)+' kg', '');
@@ -976,7 +1069,9 @@ function exportDescarteExcel(){
   );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detalleData), 'Detalle');
 
-  const fname = 'descarte_' + (state.viewMode==='dia'?state.fecha:(state.viewMode==='semana'?state.semana:state.mes)) + '.xlsx';
+  const chipsActuales = (state.chips && state.chips[state.viewMode]) || [];
+  const periodoNombre = chipsActuales.length ? chipsActuales.join('_') : (state.viewMode+'_actual');
+  const fname = 'descarte_' + periodoNombre.replace(/[^a-zA-Z0-9_-]/g,'') + '.xlsx';
   XLSX.writeFile(wb, fname);
 }
 
@@ -1061,66 +1156,40 @@ async function getAggregatedRows(tipo, dateList){
 
 function onContextChange(){
   if(!state.viewMode) state.viewMode = 'dia';
+  if(!state.chips) state.chips = {dia:[], semana:[], mes:[], anio:[]};
 
-  state.fecha = document.getElementById('fechaInput').value || todayStr();
-
-  const semanaInput = document.getElementById('semanaInput');
-  const mesInput = document.getElementById('mesInput');
-  const anioInput = document.getElementById('anioInput');
-
-  if(state.viewMode==='semana'){
-    state.semana = semanaInput.value || state.semana || isoWeekString(new Date());
-  } else if(!state.semana){
-    state.semana = isoWeekString(new Date());
-  }
-  semanaInput.value = state.semana;
-
-  if(state.viewMode==='mes'){
-    state.mes = mesInput.value || state.mes || todayStr().slice(0,7);
-  } else if(!state.mes){
-    state.mes = todayStr().slice(0,7);
-  }
-  mesInput.value = state.mes;
-
-  if(state.viewMode==='anio'){
-    state.anio = anioInput.value || state.anio || String(new Date().getFullYear());
-  } else if(!state.anio){
-    state.anio = String(new Date().getFullYear());
-  }
-  anioInput.value = state.anio;
+  populateAnioSelect();
 
   document.getElementById('fechaField').style.display = state.viewMode==='dia' ? '' : 'none';
   document.getElementById('semanaField').style.display = state.viewMode==='semana' ? '' : 'none';
   document.getElementById('mesField').style.display = state.viewMode==='mes' ? '' : 'none';
   document.getElementById('anioField').style.display = state.viewMode==='anio' ? '' : 'none';
 
+  ['dia','semana','mes','anio'].forEach(renderPeriodChips);
+
   buildTipoChips();
   buildViewModeChips();
 
   const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
-
-  let periodLabel = tipoLabel;
-  if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
-  else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
-  else if(state.viewMode==='anio') periodLabel = 'Año ' + state.anio + ' — ' + tipoLabel;
+  const periodLabel = currentPeriodLabel(tipoLabel);
   document.getElementById('vpmSummaryTipoLabel').textContent = periodLabel;
   document.getElementById('cumplSummaryTipoLabel').textContent = periodLabel;
 
-  if(state.viewMode==='dia'){
-    loadCurrentVpm();
-    loadCurrentCumpl();
-  } else {
-    loadPeriodView();
-  }
+  loadPeriodView();
   if(activeTab==='descarte') loadDescarteView();
 }
 
 function periodDescriptionForMsg(){
-  if(state.viewMode==='semana') return 'la semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0];
-  if(state.viewMode==='mes') return 'el mes de ' + state.mes;
-  if(state.viewMode==='anio') return 'el año ' + state.anio;
-  const d = new Date(state.fecha+'T00:00:00');
-  return 'el ' + d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
+  const mode = state.viewMode;
+  const chips = (state.chips && state.chips[mode]) || [];
+  if(chips.length===0){
+    if(mode==='semana') return 'esta semana';
+    if(mode==='mes') return 'este mes';
+    if(mode==='anio') return 'este año';
+    const d = new Date(todayStr()+'T00:00:00');
+    return 'el ' + d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
+  }
+  return chips.map(v=>formatChipLabel(mode,v)).join(', ');
 }
 
 function showNoDataMessage(show){
@@ -1134,13 +1203,6 @@ function showNoDataMessage(show){
   cumplMsg.style.display = show ? '' : 'none';
   document.getElementById('vpmSummaryPanel').style.display = show ? 'none' : '';
   document.getElementById('cumplSummaryPanel').style.display = show ? 'none' : '';
-}
-
-function getDateListForCurrentPeriod(){
-  if(state.viewMode==='semana') return datesInWeek(state.semana);
-  if(state.viewMode==='mes') return datesInMonth(state.mes);
-  if(state.viewMode==='anio') return datesInYear(state.anio);
-  return [state.fecha];
 }
 
 async function loadPeriodView(){
@@ -2080,12 +2142,11 @@ function populateImportedDatesUI(statusMsg, warningMsg, jumpToLatest){
 
   if(jumpToLatest && importedDates.length){
     document.getElementById('fechaInput').value = importedDates[0];
-    state.fecha = importedDates[0];
     onContextChange();
   } else if(!jumpToLatest){
     // Refresco silencioso: no tocar el filtro que la persona ya eligió, solo refrescar la vista actual con los datos nuevos.
-    if(state.viewMode==='dia'){ loadCurrentVpm(); loadCurrentCumpl(); }
-    else { loadPeriodView(); }
+    loadPeriodView();
+    if(activeTab==='descarte') loadDescarteView();
   }
 }
 
@@ -2159,7 +2220,6 @@ async function ensureStorage(){
 
 /* ---------------- INIT ---------------- */
 document.getElementById('fechaInput').value = todayStr();
-document.getElementById('anioInput').value = new Date().getFullYear();
 document.getElementById('histDesde').value = todayStr();
 document.getElementById('histHasta').value = todayStr();
 document.getElementById('histCumplDesde').value = todayStr();
