@@ -197,6 +197,10 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       <label>Mes</label>
       <input type="month" id="mesInput" onchange="onContextChange()">
     </div>
+    <div class="field" id="anioField" style="display:none;">
+      <label>Año</label>
+      <input type="number" id="anioInput" min="2000" max="2100" step="1" style="width:90px;" onchange="onContextChange()">
+    </div>
     <div class="field" id="tipoFrutaField">
       <label>Tipo de fruta</label>
       <div class="chip-row" id="tipoChips"></div>
@@ -516,7 +520,8 @@ function buildTipoChips(){
 const VIEW_MODES = [
   {key:'dia', label:'Día'},
   {key:'semana', label:'Semana'},
-  {key:'mes', label:'Mes'}
+  {key:'mes', label:'Mes'},
+  {key:'anio', label:'Año'}
 ];
 
 function buildViewModeChips(){
@@ -564,6 +569,11 @@ function datesInMonth(monthStr){
     dates.push(year+'-'+String(month).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   }
   return dates;
+}
+
+function datesInYear(yearStr){
+  const year = Number(yearStr);
+  return datesInRange(year+'-01-01', year+'-12-31');
 }
 
 function datesInRange(startStr, endStr){
@@ -795,10 +805,7 @@ async function ensureDescarteLoaded(){
 }
 
 function getDescarteRecordsForPeriod(){
-  let dateSet;
-  if(state.viewMode==='semana') dateSet = new Set(datesInWeek(state.semana));
-  else if(state.viewMode==='mes') dateSet = new Set(datesInMonth(state.mes));
-  else dateSet = new Set([state.fecha]);
+  const dateSet = new Set(getDateListForCurrentPeriod());
   const tipoFiltro = state.descarteTipo || 'normal';
   return importedDescarte.filter(r=> dateSet.has(r.fecha) && (tipoFiltro==='total' || r.tipo===tipoFiltro));
 }
@@ -849,6 +856,7 @@ async function renderDescarteSummary(){
   let periodLabel = tipoLabel;
   if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
   else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
+  else if(state.viewMode==='anio') periodLabel = 'Año ' + state.anio + ' — ' + tipoLabel;
   document.getElementById('descarteSummaryTipoLabel').textContent = periodLabel;
   lastDescartePeriodLabel = periodLabel;
 
@@ -863,7 +871,7 @@ async function renderDescarteSummary(){
       const rows = await getEffectiveVpmRows(state.fecha, tc);
       if(rows) cosechado += rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
     } else {
-      const dateList = state.viewMode==='semana' ? datesInWeek(state.semana) : datesInMonth(state.mes);
+      const dateList = getDateListForCurrentPeriod();
       const agr = await getAggregatedRows(tc, dateList);
       cosechado += agr.rows.reduce((a,r)=>a+r.rv+r.rp+r.ra,0);
     }
@@ -1058,6 +1066,7 @@ function onContextChange(){
 
   const semanaInput = document.getElementById('semanaInput');
   const mesInput = document.getElementById('mesInput');
+  const anioInput = document.getElementById('anioInput');
 
   if(state.viewMode==='semana'){
     state.semana = semanaInput.value || state.semana || isoWeekString(new Date());
@@ -1073,9 +1082,17 @@ function onContextChange(){
   }
   mesInput.value = state.mes;
 
+  if(state.viewMode==='anio'){
+    state.anio = anioInput.value || state.anio || String(new Date().getFullYear());
+  } else if(!state.anio){
+    state.anio = String(new Date().getFullYear());
+  }
+  anioInput.value = state.anio;
+
   document.getElementById('fechaField').style.display = state.viewMode==='dia' ? '' : 'none';
   document.getElementById('semanaField').style.display = state.viewMode==='semana' ? '' : 'none';
   document.getElementById('mesField').style.display = state.viewMode==='mes' ? '' : 'none';
+  document.getElementById('anioField').style.display = state.viewMode==='anio' ? '' : 'none';
 
   buildTipoChips();
   buildViewModeChips();
@@ -1085,6 +1102,7 @@ function onContextChange(){
   let periodLabel = tipoLabel;
   if(state.viewMode==='semana') periodLabel = 'Semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0] + ' (lun-dom) — ' + tipoLabel;
   else if(state.viewMode==='mes') periodLabel = state.mes + ' — ' + tipoLabel;
+  else if(state.viewMode==='anio') periodLabel = 'Año ' + state.anio + ' — ' + tipoLabel;
   document.getElementById('vpmSummaryTipoLabel').textContent = periodLabel;
   document.getElementById('cumplSummaryTipoLabel').textContent = periodLabel;
 
@@ -1100,6 +1118,7 @@ function onContextChange(){
 function periodDescriptionForMsg(){
   if(state.viewMode==='semana') return 'la semana ' + state.semana.split('-W')[1] + ' de ' + state.semana.split('-W')[0];
   if(state.viewMode==='mes') return 'el mes de ' + state.mes;
+  if(state.viewMode==='anio') return 'el año ' + state.anio;
   const d = new Date(state.fecha+'T00:00:00');
   return 'el ' + d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
 }
@@ -1117,8 +1136,15 @@ function showNoDataMessage(show){
   document.getElementById('cumplSummaryPanel').style.display = show ? 'none' : '';
 }
 
+function getDateListForCurrentPeriod(){
+  if(state.viewMode==='semana') return datesInWeek(state.semana);
+  if(state.viewMode==='mes') return datesInMonth(state.mes);
+  if(state.viewMode==='anio') return datesInYear(state.anio);
+  return [state.fecha];
+}
+
 async function loadPeriodView(){
-  const dateList = state.viewMode==='semana' ? datesInWeek(state.semana) : datesInMonth(state.mes);
+  const dateList = getDateListForCurrentPeriod();
   const {rows, daysWithData} = await getAggregatedRows(state.tipo, dateList);
   if(daysWithData===0){
     showNoDataMessage(true);
@@ -2133,6 +2159,7 @@ async function ensureStorage(){
 
 /* ---------------- INIT ---------------- */
 document.getElementById('fechaInput').value = todayStr();
+document.getElementById('anioInput').value = new Date().getFullYear();
 document.getElementById('histDesde').value = todayStr();
 document.getElementById('histHasta').value = todayStr();
 document.getElementById('histCumplDesde').value = todayStr();
