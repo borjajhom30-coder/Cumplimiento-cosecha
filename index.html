@@ -374,6 +374,19 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         </table>
       </div>
 
+      <h3 style="margin-top:22px;">Kilos descartados por lugar de descarte</h3>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="descarteLugarChart" role="img" aria-label="Kilos descartados por lugar de descarte">Gráfico de barras de kilos descartados por lugar de descarte.</canvas>
+      </div>
+
+      <h3 style="margin-top:18px;">Detalle por lugar de descarte</h3>
+      <div class="table-scroll">
+        <table class="hist-table" id="descarteLugarTable">
+          <thead><tr><th>Lugar de descarte</th><th>Kilos</th><th>% del total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);">
         <button class="btn btn-primary" onclick="exportDescarteExcel()">⬇ Descargar Excel</button>
       </div>
@@ -397,8 +410,8 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       </div>
       <div class="table-scroll" style="margin-top:14px;">
         <table class="hist-table" id="histDescarteTable">
-          <thead><tr><th>Fecha</th><th>Tipo</th><th>Grupo</th><th>Motivo de descarte</th><th>Kilos</th></tr></thead>
-          <tbody><tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Grupo</th><th>Motivo de descarte</th><th>Lugar de descarte</th><th>Kilos</th></tr></thead>
+          <tbody><tr><td colspan="6" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -435,7 +448,7 @@ let vpmChartCalibre = null, vpmChartColor = null, cumplChartCalibre = null, cump
 let activeTab = 'vpm';
 let importedDescarte = [];
 let descarteLoaded = false;
-let descarteChartGrupo = null, descarteChartMotivo = null;
+let descarteChartGrupo = null, descarteChartMotivo = null, descarteChartLugar = null;
 let importedVpm = (typeof window.__EMBEDDED_VPM_DATA__ !== 'undefined' && window.__EMBEDDED_VPM_DATA__) ? window.__EMBEDDED_VPM_DATA__ : {};
 let importedDates = [];
 
@@ -766,8 +779,9 @@ async function fetchDescarteData(sheetId){
     if(!tipo) return;
     const grupo = (r[5]!=null && String(r[5]).trim()!=='') ? String(r[5]).trim() : '(Sin grupo)';
     const motivo = (r[11]!=null && String(r[11]).trim()!=='') ? String(r[11]).trim() : '(Sin motivo)';
+    const lugar = (r[13]!=null && String(r[13]).trim()!=='') ? String(r[13]).trim() : '(Sin lugar)';
     const kilos = Number(r[10])||0;
-    records.push({fecha, tipo, grupo, motivo, kilos});
+    records.push({fecha, tipo, grupo, motivo, lugar, kilos});
   });
   return records;
 }
@@ -790,16 +804,18 @@ function getDescarteRecordsForPeriod(){
 }
 
 function aggregateDescarte(records){
-  const byGrupo = {}, byMotivo = {};
+  const byGrupo = {}, byMotivo = {}, byLugar = {};
   let total = 0;
   records.forEach(r=>{
     byGrupo[r.grupo] = (byGrupo[r.grupo]||0) + r.kilos;
     byMotivo[r.motivo] = (byMotivo[r.motivo]||0) + r.kilos;
+    byLugar[r.lugar] = (byLugar[r.lugar]||0) + r.kilos;
     total += r.kilos;
   });
   const grupoArr = Object.keys(byGrupo).map(k=>({key:k, kilos:byGrupo[k]})).sort((a,b)=>b.kilos-a.kilos);
   const motivoArr = Object.keys(byMotivo).map(k=>({key:k, kilos:byMotivo[k]})).sort((a,b)=>b.kilos-a.kilos);
-  return {total, grupoArr, motivoArr};
+  const lugarArr = Object.keys(byLugar).map(k=>({key:k, kilos:byLugar[k]})).sort((a,b)=>b.kilos-a.kilos);
+  return {total, grupoArr, motivoArr, lugarArr};
 }
 
 async function loadDescarteView(){
@@ -869,12 +885,17 @@ async function renderDescarteSummary(){
 
   renderDescarteChart('descarteGrupoChart', agg.grupoArr);
   renderDescarteChart('descarteMotivoChart', agg.motivoArr);
+  renderDescarteChart('descarteLugarChart', agg.lugarArr);
 
   document.querySelector('#descarteGrupoTable tbody').innerHTML = agg.grupoArr.map(x=>
     '<tr><td class="left">'+x.key+'</td><td>'+fmt(x.kilos)+' kg</td><td>'+fmtPct(agg.total>0?x.kilos/agg.total:0)+'</td></tr>'
   ).join('') || '<tr><td colspan="3" style="color:var(--ink-mute);">Sin datos.</td></tr>';
 
   document.querySelector('#descarteMotivoTable tbody').innerHTML = agg.motivoArr.map(x=>
+    '<tr><td class="left">'+x.key+'</td><td>'+fmt(x.kilos)+' kg</td><td>'+fmtPct(agg.total>0?x.kilos/agg.total:0)+'</td></tr>'
+  ).join('') || '<tr><td colspan="3" style="color:var(--ink-mute);">Sin datos.</td></tr>';
+
+  document.querySelector('#descarteLugarTable tbody').innerHTML = agg.lugarArr.map(x=>
     '<tr><td class="left">'+x.key+'</td><td>'+fmt(x.kilos)+' kg</td><td>'+fmtPct(agg.total>0?x.kilos/agg.total:0)+'</td></tr>'
   ).join('') || '<tr><td colspan="3" style="color:var(--ink-mute);">Sin datos.</td></tr>';
 }
@@ -887,6 +908,7 @@ function renderDescarteChart(canvasId, arr){
 
   if(canvasId==='descarteGrupoChart' && descarteChartGrupo){ descarteChartGrupo.destroy(); }
   if(canvasId==='descarteMotivoChart' && descarteChartMotivo){ descarteChartMotivo.destroy(); }
+  if(canvasId==='descarteLugarChart' && descarteChartLugar){ descarteChartLugar.destroy(); }
 
   // Ancho dinámico: cada barra necesita espacio propio para que ningún grupo/motivo quede oculto o agrupado.
   const wrap = ctx.closest('.chart-wrap');
@@ -915,7 +937,8 @@ function renderDescarteChart(canvasId, arr){
     }
   });
   if(canvasId==='descarteGrupoChart') descarteChartGrupo = chart;
-  else descarteChartMotivo = chart;
+  else if(canvasId==='descarteMotivoChart') descarteChartMotivo = chart;
+  else descarteChartLugar = chart;
 }
 
 function exportDescarteExcel(){
@@ -935,8 +958,13 @@ function exportDescarteExcel(){
   );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(motivoData), 'Por motivo');
 
-  const detalleData = [['Fecha','Tipo','Grupo','Motivo de descarte','Kilos']].concat(
-    lastDescarteRecords.map(r=>[r.fecha, TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo, r.grupo, r.motivo, r.kilos])
+  const lugarData = [['Lugar de descarte','Kilos','% del total']].concat(
+    lastDescarteAgg.lugarArr.map(x=>[x.key, x.kilos, lastDescarteAgg.total>0 ? Math.round(x.kilos/lastDescarteAgg.total*1000)/10 : 0])
+  );
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(lugarData), 'Por lugar');
+
+  const detalleData = [['Fecha','Tipo','Grupo','Motivo de descarte','Lugar de descarte','Kilos']].concat(
+    lastDescarteRecords.map(r=>[r.fecha, TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo, r.grupo, r.motivo, r.lugar, r.kilos])
   );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detalleData), 'Detalle');
 
@@ -950,20 +978,20 @@ async function runHistoricalSearchDescarte(){
   const tbody = document.querySelector('#histDescarteTable tbody');
   lastHistDescarteRecords = [];
   if(!desde || !hasta){
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
     return;
   }
   const dateList = datesInRange(desde, hasta);
   if(dateList.length===0){
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
     return;
   }
-  tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Buscando…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">Buscando…</td></tr>';
 
   try{
     await ensureDescarteLoaded();
   }catch(err){
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">No se pudo cargar el descarte: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">No se pudo cargar el descarte: ' + err.message + '</td></tr>';
     return;
   }
 
@@ -974,12 +1002,12 @@ async function runHistoricalSearchDescarte(){
     .sort((a,b)=> a.fecha.localeCompare(b.fecha));
 
   if(records.length===0){
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay descarte de ' + DESCARTE_TIPOS.find(t=>t.key===tipoFiltro).label + ' en ese rango de fechas.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--ink-mute);">No hay descarte de ' + DESCARTE_TIPOS.find(t=>t.key===tipoFiltro).label + ' en ese rango de fechas.</td></tr>';
     return;
   }
   tbody.innerHTML = records.map(r=>
     '<tr><td>'+r.fecha+'</td><td><span class="tag '+r.tipo+'">'+TIPOS.find(t=>t.key===r.tipo).label+'</span></td>' +
-    '<td class="left">'+r.grupo+'</td><td class="left">'+r.motivo+'</td><td>'+fmt(r.kilos)+' kg</td></tr>'
+    '<td class="left">'+r.grupo+'</td><td class="left">'+r.motivo+'</td><td class="left">'+r.lugar+'</td><td>'+fmt(r.kilos)+' kg</td></tr>'
   ).join('');
   lastHistDescarteRecords = records;
   lastHistDescarteRange = {desde, hasta};
@@ -991,8 +1019,8 @@ function exportHistDescarteExcel(){
     return;
   }
   const wb = XLSX.utils.book_new();
-  const data = [['Fecha','Tipo','Grupo','Motivo de descarte','Kilos']].concat(
-    lastHistDescarteRecords.map(r=>[r.fecha, TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo, r.grupo, r.motivo, r.kilos])
+  const data = [['Fecha','Tipo','Grupo','Motivo de descarte','Lugar de descarte','Kilos']].concat(
+    lastHistDescarteRecords.map(r=>[r.fecha, TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo, r.grupo, r.motivo, r.lugar, r.kilos])
   );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Descarte');
   const fname = 'descarte_' + (lastHistDescarteRange.desde||'') + '_a_' + (lastHistDescarteRange.hasta||'') + '.xlsx';
@@ -1003,7 +1031,7 @@ function clearHistoricalSearchDescarte(){
   document.getElementById('histDescarteDesde').value = '';
   document.getElementById('histDescarteHasta').value = '';
   document.querySelector('#histDescarteTable tbody').innerHTML =
-    '<tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
+    '<tr><td colspan="6" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
   lastHistDescarteRecords = [];
   lastHistDescarteRange = {desde:'', hasta:''};
 }
@@ -2127,4 +2155,4 @@ ensureStorage().then(async ()=>{
 });
 </script>
 </body>
-</ht
+</html>
