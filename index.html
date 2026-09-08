@@ -926,34 +926,40 @@ function renderDescarteChart(canvasId, arr){
   const labels = arr.map(x=>x.key);
   const values = arr.map(x=>x.kilos);
   const total = arr.reduce((a,x)=>a+x.kilos,0);
+  const n = arr.length;
 
   if(canvasId==='descarteGrupoChart' && descarteChartGrupo){ descarteChartGrupo.destroy(); }
   if(canvasId==='descarteMotivoChart' && descarteChartMotivo){ descarteChartMotivo.destroy(); }
   if(canvasId==='descarteLugarChart' && descarteChartLugar){ descarteChartLugar.destroy(); }
 
-  // Ancho dinámico: cada barra necesita espacio propio para que ningún grupo/motivo quede oculto o agrupado.
+  // Que las barras y las letras se achiquen solas mientras más datos haya, así siempre caben
+  // dentro del mismo ancho y los números no se encima entre sí ni con las barras vecinas.
   const wrap = ctx.closest('.chart-wrap');
-  if(wrap){
-    wrap.style.overflowX = 'auto';
-    const minWidth = Math.max(wrap.parentElement ? wrap.parentElement.clientWidth : 600, labels.length*46);
-    ctx.style.minWidth = minWidth + 'px';
-  }
+  if(wrap){ wrap.style.overflowX = 'hidden'; }
+  ctx.style.minWidth = '';
+  ctx.style.width = '';
+
+  let labelFont, dataFont, maxBarThickness, rotation, showPct;
+  if(n<=12){ labelFont=12; dataFont=10; maxBarThickness=46; rotation=40; showPct=true; }
+  else if(n<=25){ labelFont=10; dataFont=9; maxBarThickness=28; rotation=60; showPct=true; }
+  else if(n<=45){ labelFont=8.5; dataFont=8; maxBarThickness=16; rotation=75; showPct=false; }
+  else { labelFont=7.5; dataFont=7; maxBarThickness=9; rotation=90; showPct=false; }
 
   const chart = new Chart(ctx, {
     type:'bar',
-    data:{ labels, datasets:[{ data: values, backgroundColor:'#c0392b', borderRadius:4 }] },
+    data:{ labels, datasets:[{ data: values, backgroundColor:'#c0392b', borderRadius:3, maxBarThickness }] },
     options:{
       responsive:true, maintainAspectRatio:false,
-      layout:{ padding:{ top:26 } },
+      layout:{ padding:{ top:24 } },
       plugins:{
         legend:{display:false},
         tooltip:{ callbacks:{ label:(c)=> fmt(c.raw)+' kg' } },
-        datalabels:{ anchor:'end', align:'end', offset:2, color:'#5c6b73', font:{size:10,weight:'600'},
-          formatter:(v)=> fmt(v)+' ('+(total>0?Math.round(v/total*100):0)+'%)' }
+        datalabels:{ anchor:'end', align:'end', offset:1, color:'#5c6b73', font:{size:dataFont,weight:'600'},
+          formatter:(v)=> showPct ? (fmt(v)+' ('+(total>0?Math.round(v/total*100):0)+'%)') : fmt(v) }
       },
       scales:{
-        y:{ beginAtZero:true, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>fmt(v)} },
-        x:{ grid:{display:false}, ticks:{autoSkip:false, maxRotation:60, minRotation:0} }
+        y:{ beginAtZero:true, grid:{color:'#e1e0d9'}, ticks:{callback:(v)=>fmt(v), font:{size:dataFont}} },
+        x:{ grid:{display:false}, ticks:{autoSkip:false, maxRotation:rotation, minRotation:rotation, font:{size:labelFont}} }
       }
     }
   });
