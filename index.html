@@ -409,6 +409,7 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Usa el rango de fechas y el tipo de descarte seleccionados arriba.</div>
       <div class="upload-row" style="margin-top:0;">
         <button class="btn btn-primary" onclick="exportHistDescarteExcel()">⬇ Descargar Excel</button>
+        <button class="btn btn-primary" onclick="exportHistDescarteCSV()">⬇ Descargar CSV</button>
       </div>
       <div class="table-scroll" style="margin-top:14px;">
         <table class="hist-table" id="histDescarteTable">
@@ -1025,6 +1026,35 @@ function exportHistDescarteExcel(){
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Descarte');
   const fname = 'descarte_' + state.descarteDesde + '_a_' + state.descarteHasta + '.xlsx';
   XLSX.writeFile(wb, fname);
+}
+
+function csvEscape(val){
+  const s = String(val==null ? '' : val);
+  if(/[",\n;]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+function exportHistDescarteCSV(){
+  if(!lastHistDescarteRecords.length){
+    setStatus('No hay datos para exportar en el rango seleccionado');
+    return;
+  }
+  const header = ['Fecha','Tipo','Grupo','Motivo de descarte','Lugar de descarte','Kilos'];
+  const lines = [header.map(csvEscape).join(',')];
+  lastHistDescarteRecords.forEach(r=>{
+    const tipoLabel = TIPOS.find(t=>t.key===r.tipo) ? TIPOS.find(t=>t.key===r.tipo).label : r.tipo;
+    lines.push([r.fecha, tipoLabel, r.grupo, r.motivo, r.lugar, r.kilos].map(csvEscape).join(','));
+  });
+  const csvContent = '\ufeff' + lines.join('\r\n'); // BOM para que Excel abra bien los acentos
+  const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'descarte_' + state.descarteDesde + '_a_' + state.descarteHasta + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
 }
 
 async function getAggregatedRows(tipo, dateList){
