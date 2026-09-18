@@ -304,7 +304,9 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
       <h3 style="margin-top:22px;">Cumplimiento por color</h3>
       <div class="legend">
         <span><span class="dot" style="background:#3266ad"></span>Proyectado</span>
-        <span><span class="dot" style="background:#eb6834"></span>Real</span>
+        <span><span class="dot" style="background:#2f8f4e"></span>Real Verde</span>
+        <span><span class="dot" style="background:#e0b400"></span>Real Pintón</span>
+        <span><span class="dot" style="background:#c0392b"></span>Real Alto</span>
       </div>
       <div class="chart-wrap" style="height:240px;">
         <canvas id="cumplColorChart" role="img" aria-label="Comparación de porcentaje proyectado y real por color">Gráfico de barras comparando cumplimiento proyectado y real por color.</canvas>
@@ -1465,13 +1467,18 @@ function renderCumplSummary(data){
     return c.proy>0 ? c.real/c.proy : null;
   });
   const colorMax = Math.max(1, ...COLOR_KEYS.map(ck=>Math.max(data.color[ck.key].proy, data.color[ck.key].real)));
+  const realColores = COLOR_KEYS.map(ck=>{
+    if(ck.key==='verde') return '#2f8f4e';
+    if(ck.key==='pintona') return '#e0b400';
+    return '#c0392b'; // alto / madura
+  });
   cumplChartColor = new Chart(ctxColor, {
     type:'bar',
     data:{
       labels: COLOR_KEYS.map(ck=>ck.label),
       datasets:[
         {label:'Proyectado', data: COLOR_KEYS.map(ck=>data.color[ck.key].proy), backgroundColor:'#3266ad', borderRadius:4},
-        {label:'Real', data: COLOR_KEYS.map(ck=>data.color[ck.key].real), backgroundColor:'#eb6834', borderRadius:4}
+        {label:'Real', data: COLOR_KEYS.map(ck=>data.color[ck.key].real), backgroundColor:realColores, borderRadius:4}
       ]
     },
     options:{
