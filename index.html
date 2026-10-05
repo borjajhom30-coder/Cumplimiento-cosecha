@@ -438,8 +438,8 @@ const CALIBRE_SETS = {
   exportacion: ['Calibre 5','Calibre 6','Calibre 7','Calibre 8','Calibre 9','Calibre 10']
 };
 const TIPOS = [
-  {key:'normal', label:'Inducción (Normal)'},
-  {key:'adelantada', label:'Adelantada'},
+  {key:'normal', label:'Inducción'},
+  {key:'adelantada', label:'Natural'},
   {key:'exportacion', label:'Exportación'}
 ];
 const COLOR_KEYS = [
@@ -754,8 +754,8 @@ function clearHistoricalSearchCumpl(){
 
 const DESCARTE_TIPOS = [
   {key:'normal', label:'Inducción'},
-  {key:'adelantada', label:'Adelantada'},
-  {key:'total', label:'Total (Inducción + Adelantada)'}
+  {key:'adelantada', label:'Natural'},
+  {key:'total', label:'Total (Inducción + Natural)'}
 ];
 let lastDescarteAgg = null;
 let lastDescarteRecords = [];
@@ -784,7 +784,7 @@ function buildDescarteTipoChips(){
 
 function tipoFromDescarteValue(v){
   const t = String(v||'').trim().toLowerCase();
-  if(t.indexOf('floracion')===0 || t.indexOf('floración')===0) return 'adelantada';
+  if(t.indexOf('natural')===0 || t.indexOf('floracion')===0 || t.indexOf('floración')===0) return 'adelantada';
   if(t.indexOf('induccion')===0 || t.indexOf('inducción')===0) return 'normal';
   return null;
 }
