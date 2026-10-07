@@ -315,8 +315,8 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
 
     <div class="panel">
       <h2>Búsqueda histórica de cumplimiento</h2>
-      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Filtra uno o varios días para ver el % Proyectado, % Real y % de Diferencia por calibre y por color. Usa el tipo de fruta seleccionado arriba.</div>
-      <div class="upload-row" style="margin-top:0;">
+      <div style="font-size:12.5px;color:var(--ink-mute);margin-bottom:12px;">Filtra uno o varios días para ver el % Proyectado, % Real y % de Diferencia por calibre y por color. Con los botones de "Ver / descargar" eliges si ves (y descargas) Inducción, Natural o las dos.</div>
+      <div class="upload-row" style="margin-top:0;flex-wrap:wrap;">
         <div class="field">
           <label>Desde</label>
           <input type="date" id="histCumplDesde">
@@ -327,23 +327,15 @@ table.detail tfoot td{font-weight:800;border-top:2px solid var(--line);border-bo
         </div>
         <button class="btn btn-primary" onclick="runHistoricalSearchCumpl()">Buscar</button>
         <button class="btn btn-ghost" onclick="clearHistoricalSearchCumpl()">Limpiar</button>
+        <div class="field">
+          <label>Ver / descargar</label>
+          <div class="chip-row" id="cumplDownloadChips"></div>
+        </div>
         <button class="btn btn-primary" onclick="exportHistSearchCumplExcel()">⬇ Descargar Excel</button>
       </div>
 
-      <h3 style="margin-top:18px;">Por calibre</h3>
-      <div class="table-scroll">
-        <table class="hist-table" id="histCumplCalibreTable">
-          <thead><tr><th>Fecha</th><th>Calibre</th><th>Proyectado %</th><th>Real %</th><th>Diferencia %</th></tr></thead>
-          <tbody><tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
-        </table>
-      </div>
-
-      <h3 style="margin-top:18px;">Por color</h3>
-      <div class="table-scroll">
-        <table class="hist-table" id="histCumplColorTable">
-          <thead><tr><th>Fecha</th><th>Color</th><th>Proyectado %</th><th>Real %</th><th>Diferencia %</th></tr></thead>
-          <tbody><tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr></tbody>
-        </table>
+      <div id="histCumplResults" style="margin-top:18px;">
+        <div style="font-size:13px;color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</div>
       </div>
     </div>
 
@@ -670,84 +662,174 @@ function clearHistoricalSearch(){
   lastHistSearchRange = {desde:'', hasta:''};
 }
 
+let histCumplSearched = false; // true cuando ya se hizo una búsqueda (para refrescar al cambiar de tipo)
+let histCumplRunId = 0;
+
+function histCumplMsg(texto){
+  return '<div style="font-size:13px;color:var(--ink-mute);">' + texto + '</div>';
+}
+
+function histCumplBlockHtml(tipo, calRowsHtml, colorRowsHtml, mostrarTitulo){
+  const tipoLabel = TIPOS.find(t=>t.key===tipo).label;
+  const noDataRow = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay proceso de ' + tipoLabel + ' en ese rango de fechas.</td></tr>';
+  let html = '';
+  if(mostrarTitulo){
+    html += '<h3 style="margin:22px 0 4px;font-size:15px;color:var(--navy-deep);border-bottom:2px solid var(--line);padding-bottom:6px;">' + tipoLabel.toUpperCase() + '</h3>';
+  }
+  html += '<h3 style="margin-top:14px;">Por calibre</h3>' +
+    '<div class="table-scroll"><table class="hist-table">' +
+    '<thead><tr><th>Fecha</th><th>Calibre</th><th>Proyectado %</th><th>Real %</th><th>Diferencia %</th></tr></thead>' +
+    '<tbody>' + (calRowsHtml.length ? calRowsHtml.join('') : noDataRow) + '</tbody></table></div>';
+  html += '<h3 style="margin-top:18px;">Por color</h3>' +
+    '<div class="table-scroll"><table class="hist-table">' +
+    '<thead><tr><th>Fecha</th><th>Color</th><th>Proyectado %</th><th>Real %</th><th>Diferencia %</th></tr></thead>' +
+    '<tbody>' + (colorRowsHtml.length ? colorRowsHtml.join('') : noDataRow) + '</tbody></table></div>';
+  return html;
+}
+
 async function runHistoricalSearchCumpl(){
   const desde = document.getElementById('histCumplDesde').value;
   const hasta = document.getElementById('histCumplHasta').value;
-  const calTbody = document.querySelector('#histCumplCalibreTable tbody');
-  const colorTbody = document.querySelector('#histCumplColorTable tbody');
-  lastHistCumplCalRows = [];
-  lastHistCumplColorRows = [];
+  const box = document.getElementById('histCumplResults');
+  const myRun = ++histCumplRunId;
+  histCumplSearched = true;
   if(!desde || !hasta){
-    calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige la fecha "Desde" y "Hasta" primero.</td></tr>';
+    box.innerHTML = histCumplMsg('Elige la fecha "Desde" y "Hasta" primero.');
     return;
   }
   const dateList = datesInRange(desde, hasta);
   if(dateList.length===0){
-    calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">El rango de fechas no es válido.</td></tr>';
+    box.innerHTML = histCumplMsg('El rango de fechas no es válido.');
     return;
   }
-  calTbody.innerHTML = colorTbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);">Buscando…</td></tr>';
+  box.innerHTML = histCumplMsg('Buscando…');
 
-  const calRowsHtml = [];
-  const colorRowsHtml = [];
-  const calDataRows = [];
-  const colorDataRows = [];
-  for(const fecha of dateList){
-    const rows = await getEffectiveVpmRows(fecha, state.tipo);
-    if(!rows) continue;
-    const data = computeCumplFromRows(rows);
-    data.calibre.forEach(c=>{
-      const diff = c.real - c.proy;
-      calRowsHtml.push('<tr>' +
-        '<td>'+fecha+'</td><td class="left">'+c.calibre+'</td>' +
-        '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
-        '<td>'+diffBadge(diff)+' pts</td>' +
-        '</tr>');
-      calDataRows.push([fecha, c.calibre, Math.round(c.proy*10)/10, Math.round(c.real*10)/10, Math.round(diff*10)/10]);
-    });
-    COLOR_KEYS.forEach(ck=>{
-      const c = data.color[ck.key];
-      const diff = c.real - c.proy;
-      colorRowsHtml.push('<tr>' +
-        '<td>'+fecha+'</td><td class="left">'+ck.label+'</td>' +
-        '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
-        '<td>'+diffBadge(diff)+' pts</td>' +
-        '</tr>');
-      colorDataRows.push([fecha, ck.label, Math.round(c.proy*10)/10, Math.round(c.real*10)/10, Math.round(diff*10)/10]);
-    });
+  const sel = effectiveCumplDownloadSel();
+  const tipos = sel==='ambos' ? ['normal','adelantada'] : [sel];
+  let html = '';
+  for(const tipo of tipos){
+    const calRowsHtml = [];
+    const colorRowsHtml = [];
+    for(const fecha of dateList){
+      const rows = await getEffectiveVpmRows(fecha, tipo);
+      if(!rows) continue;
+      const data = computeCumplFromRows(rows);
+      data.calibre.forEach(c=>{
+        const diff = c.real - c.proy;
+        calRowsHtml.push('<tr>' +
+          '<td>'+fecha+'</td><td class="left">'+c.calibre+'</td>' +
+          '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
+          '<td>'+diffBadge(diff)+' pts</td>' +
+          '</tr>');
+      });
+      COLOR_KEYS.forEach(ck=>{
+        const c = data.color[ck.key];
+        const diff = c.real - c.proy;
+        colorRowsHtml.push('<tr>' +
+          '<td>'+fecha+'</td><td class="left">'+ck.label+'</td>' +
+          '<td>'+c.proy.toFixed(1)+'%</td><td>'+c.real.toFixed(1)+'%</td>' +
+          '<td>'+diffBadge(diff)+' pts</td>' +
+          '</tr>');
+      });
+    }
+    html += histCumplBlockHtml(tipo, calRowsHtml, colorRowsHtml, sel==='ambos');
   }
-
-  const noDataMsg = '<tr><td colspan="5" style="color:var(--ink-mute);">No hay proceso de ' + TIPOS.find(t=>t.key===state.tipo).label + ' en ese rango de fechas.</td></tr>';
-  calTbody.innerHTML = calRowsHtml.length ? calRowsHtml.join('') : noDataMsg;
-  colorTbody.innerHTML = colorRowsHtml.length ? colorRowsHtml.join('') : noDataMsg;
-  lastHistCumplCalRows = calDataRows;
-  lastHistCumplColorRows = colorDataRows;
-  lastHistCumplRange = {desde, hasta};
+  if(myRun !== histCumplRunId) return; // llegó una búsqueda más nueva, esta ya no vale
+  box.innerHTML = html;
 }
 
-function exportHistSearchCumplExcel(){
-  if(!lastHistCumplCalRows.length && !lastHistCumplColorRows.length){
-    setStatus('Primero haz una búsqueda con resultados');
+let cumplDownloadSel = null; // null = sigue el "Tipo de fruta" de arriba hasta que se elija uno aquí
+
+function effectiveCumplDownloadSel(){
+  if(cumplDownloadSel) return cumplDownloadSel;
+  return (state.tipo==='normal' || state.tipo==='adelantada') ? state.tipo : 'ambos';
+}
+
+function renderCumplDownloadChips(){
+  const wrap = document.getElementById('cumplDownloadChips');
+  if(!wrap) return;
+  const labelNormal = TIPOS.find(t=>t.key==='normal').label;
+  const labelNatural = TIPOS.find(t=>t.key==='adelantada').label;
+  const opts = [
+    {key:'normal', label:labelNormal},
+    {key:'adelantada', label:labelNatural},
+    {key:'ambos', label:labelNormal + ' + ' + labelNatural}
+  ];
+  const sel = effectiveCumplDownloadSel();
+  wrap.innerHTML = '';
+  opts.forEach(o=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (o.key===sel ? ' active' : '');
+    chip.textContent = o.label;
+    chip.onclick = ()=>{ cumplDownloadSel = o.key; renderCumplDownloadChips(); if(histCumplSearched) runHistoricalSearchCumpl(); };
+    wrap.appendChild(chip);
+  });
+}
+
+async function exportHistSearchCumplExcel(){
+  const desde = document.getElementById('histCumplDesde').value;
+  const hasta = document.getElementById('histCumplHasta').value;
+  if(!desde || !hasta){
+    setStatus('Elige las fechas "Desde" y "Hasta" primero');
     return;
   }
-  const wb = XLSX.utils.book_new();
+  const dateList = datesInRange(desde, hasta);
+  if(dateList.length===0){
+    setStatus('El rango de fechas no es válido');
+    return;
+  }
+
+  const sel = effectiveCumplDownloadSel();
+  const tipos = sel==='ambos' ? ['normal','adelantada'] : [sel];
+  const round1 = x => Math.round(x*10)/10;
   const headerCal = ['Fecha','Calibre','Proyectado %','Real %','Diferencia (pts)'];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerCal].concat(lastHistCumplCalRows)), 'Por calibre');
   const headerColor = ['Fecha','Color','Proyectado %','Real %','Diferencia (pts)'];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerColor].concat(lastHistCumplColorRows)), 'Por color');
-  const fname = 'cumplimiento_' + (lastHistCumplRange.desde||'') + '_a_' + (lastHistCumplRange.hasta||'') + '.xlsx';
-  XLSX.writeFile(wb, fname);
+  const calAoa = [], colorAoa = [];
+  let anyData = false;
+
+  for(const tipo of tipos){
+    const titulo = TIPOS.find(t=>t.key===tipo).label.toUpperCase();
+    const calRows = [], colorRows = [];
+    for(const fecha of dateList){
+      const rows = await getEffectiveVpmRows(fecha, tipo);
+      if(!rows) continue;
+      const data = computeCumplFromRows(rows);
+      data.calibre.forEach(c=>{
+        calRows.push([fecha, c.calibre, round1(c.proy), round1(c.real), round1(c.real - c.proy)]);
+      });
+      COLOR_KEYS.forEach(ck=>{
+        const cc = data.color[ck.key];
+        colorRows.push([fecha, ck.label, round1(cc.proy), round1(cc.real), round1(cc.real - cc.proy)]);
+      });
+    }
+    if(calRows.length) anyData = true;
+    [[calAoa, headerCal, calRows], [colorAoa, headerColor, colorRows]].forEach(([aoa, header, rows])=>{
+      if(aoa.length) aoa.push([]);
+      aoa.push([titulo]);
+      aoa.push(header);
+      if(rows.length) rows.forEach(r=>aoa.push(r));
+      else aoa.push(['Sin datos en este rango de fechas']);
+    });
+  }
+
+  if(!anyData){
+    setStatus('No hay datos de cumplimiento en ese rango de fechas');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(calAoa), 'Por calibre');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(colorAoa), 'Por color');
+  const sufijo = sel==='ambos' ? 'induccion_natural' : (sel==='normal' ? 'induccion' : 'natural');
+  XLSX.writeFile(wb, 'cumplimiento_' + sufijo + '_' + desde + '_a_' + hasta + '.xlsx');
 }
 
 function clearHistoricalSearchCumpl(){
   document.getElementById('histCumplDesde').value = '';
   document.getElementById('histCumplHasta').value = '';
-  const placeholder = '<tr><td colspan="5" style="color:var(--ink-mute);">Elige un rango de fechas y dale "Buscar".</td></tr>';
-  document.querySelector('#histCumplCalibreTable tbody').innerHTML = placeholder;
-  document.querySelector('#histCumplColorTable tbody').innerHTML = placeholder;
-  lastHistCumplCalRows = [];
-  lastHistCumplColorRows = [];
-  lastHistCumplRange = {desde:'', hasta:''};
+  histCumplSearched = false;
+  histCumplRunId++;
+  document.getElementById('histCumplResults').innerHTML = histCumplMsg('Elige un rango de fechas y dale "Buscar".');
 }
 
 /* ---------------- DESCARTE TAB ---------------- */
@@ -763,9 +845,6 @@ let lastDescartePeriodLabel = '';
 let lastHistDescarteRecords = [];
 let lastHistSearchRows = [];
 let lastHistSearchRange = {desde:'', hasta:''};
-let lastHistCumplCalRows = [];
-let lastHistCumplColorRows = [];
-let lastHistCumplRange = {desde:'', hasta:''};
 let lastHistDescarteRange = {desde:'', hasta:''};
 
 function buildDescarteTipoChips(){
@@ -1118,6 +1197,8 @@ function onContextChange(){
 
   buildTipoChips();
   buildViewModeChips();
+  renderCumplDownloadChips();
+  if(histCumplSearched) runHistoricalSearchCumpl();
 
   const tipoLabel = TIPOS.find(t=>t.key===state.tipo).label;
 
